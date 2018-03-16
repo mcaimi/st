@@ -19,6 +19,8 @@
 
 #define TRUECOLOR(r,g,b)	(1 << 24 | (r) << 16 | (g) << 8 | (b))
 #define IS_TRUECOL(x)		(1 << 24 & (x))
+#define TLINE(y)  ((y) < term.scr ? term.hist[((y) + term.histi - term.scr \
+                  + histsize + 1) % histsize] : term.line[(y) - term.scr])
 
 enum glyph_attribute {
 	ATTR_NULL       = 0,
@@ -76,6 +78,13 @@ typedef union {
 	const void *v;
 } Arg;
 
+typedef struct {
+  uint b;
+  uint mask;
+  void (*func)(const Arg *);
+  const Arg arg;
+} MouseKey;
+
 void die(const char *, ...);
 void redraw(void);
 void draw(void);
@@ -112,6 +121,9 @@ void *xmalloc(size_t);
 void *xrealloc(void *, size_t);
 char *xstrdup(char *);
 
+void kscrolldown(const Arg *);
+void kscrollup(const Arg *);
+
 int borderpx;
 
 /* config.h globals */
@@ -127,3 +139,5 @@ extern unsigned int defaultbg;
 extern unsigned int alpha;
 extern char *shell;
 extern int borderperc;
+extern unsigned int histsize;
+extern MouseKey mkeys[];
