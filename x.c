@@ -1119,6 +1119,8 @@ xinit(int cols, int rows)
 			xw.vis, CWBackPixel | CWBorderPixel | CWBitGravity
 			| CWEventMask | CWColormap, &xw.attrs);
 
+  snprintf(winid, LEN(winid), "%lu", (unsigned long)xw.win);
+
 	memset(&gcvalues, 0, sizeof(gcvalues));
 	gcvalues.graphics_exposures = False;
 	xw.buf = XCreatePixmap(xw.dpy, xw.win, win.w, win.h, xw.depth);
