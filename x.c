@@ -430,11 +430,20 @@ bpress(XEvent *e)
 {
 	struct timespec now;
 	MouseShortcut *ms;
+  MouseKey *mk;
 	int snap;
 
 	if (IS_SET(MODE_MOUSE) && !(e->xbutton.state & forceselmod)) {
 		mousereport(e);
 		return;
+	}
+
+	for (mk = mkeys; mk < mkeys + LEN(mkeys); mk++) {
+		if (e->xbutton.button == mk->b
+				&& match(mk->mask, e->xbutton.state)) {
+			mk->func(&mk->arg);
+			return;
+		}
 	}
 
 	for (ms = mshortcuts; ms < mshortcuts + LEN(mshortcuts); ms++) {
