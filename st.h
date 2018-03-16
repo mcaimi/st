@@ -112,6 +112,8 @@ void *xmalloc(size_t);
 void *xrealloc(void *, size_t);
 char *xstrdup(char *);
 
+int borderpx;
+
 /* config.h globals */
 extern char *utmp;
 extern char *stty_args;
@@ -124,3 +126,4 @@ extern unsigned int defaultfg;
 extern unsigned int defaultbg;
 extern unsigned int alpha;
 extern char *shell;
+extern int borderperc;

@@ -12,7 +12,7 @@ int disablebold = 0;
 int disableitalic = 0;
 int disableroman = 0;
 
-static int borderpx = 2;
+int borderperc = 20;
 
 /*
  * What program is execed by st depends of these precedence rules:
