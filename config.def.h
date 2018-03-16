@@ -6,6 +6,12 @@
  * font: see http://freedesktop.org/software/fontconfig/fontconfig-user.html
  */
 static char *font = "Liberation Mono:pixelsize=12:antialias=true:autohint=true";
+
+/* disable bold, italic and roman fonts globally */
+int disablebold = 0;
+int disableitalic = 0;
+int disableroman = 0;
+
 static int borderpx = 2;
 
 /*
@@ -192,6 +198,9 @@ ResourcePref resources[] = {
     { "opacity",      INTEGER, &alpha },
 		{ "cwscale",      FLOAT,   &cwscale },
 		{ "chscale",      FLOAT,   &chscale },
+		{ "disablebold",  INTEGER, &disablebold },
+		{ "disableroman", INTEGER, &disableroman },
+		{ "disableitalic",INTEGER, &disableitalic },
 };
 
 /*
