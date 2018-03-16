@@ -2016,6 +2016,28 @@ usage(void)
 	    " [stty_args ...]\n", argv0, argv0);
 }
 
+void
+reload(int sig)
+{
+  /* reload xresources */
+  config_init();
+
+  /* colors, fonts */
+  xloadcols();
+  xunloadfonts();
+  xloadfonts(usedfont, 0);
+
+  /* pretend the window just got resized */
+  cresize(win.w, win.h);
+
+  redraw();
+
+  /* triggers re-render if we're visible. */
+  ttywrite("\033[O", 3, 0);
+
+  signal(SIGUSR1, reload);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -2085,6 +2107,7 @@ run:
 	rows = MAX(rows, 1);
 	tnew(cols, rows);
 	xinit(cols, rows);
+  signal(SIGUSR1, reload);
 	xsetenv();
 	selinit();
 	run();
