@@ -84,6 +84,7 @@ void iso14755(const Arg *);
 void printscreen(const Arg *);
 void printsel(const Arg *);
 void sendbreak(const Arg *);
+void externalpipe(const Arg *);
 void toggleprinter(const Arg *);
 
 int tattrset(int);
@@ -122,3 +123,4 @@ extern unsigned int tabspaces;
 extern unsigned int defaultfg;
 extern unsigned int defaultbg;
 extern unsigned int alpha;
+extern char *shell;
