@@ -4,6 +4,10 @@ st is a simple terminal emulator for X which sucks less.
 
 This is a WIP fork of Suckless' awesome [ST](http://st.suckless.org), with some added features built-in:
   - Official patches that needed an update were updated to run in ST 0.8
+  - Number of rows and columns are read from Xresources
+  - Custom history size via Xresources
+  - Added skiptaskbar and skippager XResources options
+  - Added support for Xorg fullscreen mode via F11 key
 
 This forks builds upon the offical ST release already patched with these [st-patches](https://st.suckless.org/patches/):
   - st background alpha
@@ -56,10 +60,6 @@ Todo
 ----
 
 Port all customization from the [old repo](https://github.com/mcaimi/xst)
-  - Lots of options were added to XResources to be dynamically read at startup
-  - Added support for Xorg fullscreen mode via F11 key
-  - Custom history size via Xresources
-  - Added skiptaskbar and skippager XResources options
   - Added X11 Dock Icon for desktops that support this feature
 
 

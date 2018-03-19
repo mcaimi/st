@@ -7,6 +7,9 @@
  */
 static char *font = "Liberation Mono:pixelsize=12:antialias=true:autohint=true";
 
+#define TRUE 1
+#define FALSE 0
+
 /* disable bold, italic and roman fonts globally */
 int disablebold = 0;
 int disableitalic = 0;
@@ -32,6 +35,13 @@ char *vtiden = "\033[?6c";
 /* Kerning / character bounding-box multipliers */
 static float cwscale = 1.0;
 static float chscale = 1.0;
+
+/* histsize value */
+unsigned int histsize = 2000;
+
+/* skip taskbar and pager options */
+unsigned int skiptaskbar = 0;
+unsigned int skippager = 0;
 
 /*
  * word delimiter string
@@ -191,6 +201,9 @@ ResourcePref resources[] = {
     { "cursorshape",  INTEGER, &cursorshape },
     { "cols",         INTEGER, &cols },
     { "rows",         INTEGER, &rows },
+    { "histsize",     INTEGER, &histsize },
+    { "skiptaskbar",  INTEGER, &skiptaskbar },
+    { "skippager",    INTEGER, &skippager },
     { "termname",     STRING,  &termname },
     { "shell",        STRING,  &shell },
     { "xfps",         INTEGER, &xfps },
@@ -243,6 +256,7 @@ static Shortcut shortcuts[] = {
   { TERMMOD,              XK_U,           externalpipe,   {.v = "xurls | rofi -l 10 -p urlgrabber -dmenu |xargs -r $BROWSER"} },
   { ShiftMask,            XK_Page_Up,     kscrollup,      {.i = -1} },
   { ShiftMask,            XK_Page_Down,   kscrolldown,    {.i = -1} },
+  { XK_NO_MOD,            XK_F11,         go_fullscreen,  {.i = 0} },
 };
 
 /*
