@@ -189,6 +189,8 @@ ResourcePref resources[] = {
     { "foreground",   STRING,  &colorname[257] },
     { "cursorColor",  STRING,  &colorname[258] },
     { "cursorshape",  INTEGER, &cursorshape },
+    { "cols",         INTEGER, &cols },
+    { "rows",         INTEGER, &rows },
     { "termname",     STRING,  &termname },
     { "shell",        STRING,  &shell },
     { "xfps",         INTEGER, &xfps },
