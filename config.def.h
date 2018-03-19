@@ -42,6 +42,7 @@ unsigned int histsize = 2000;
 /* skip taskbar and pager options */
 unsigned int skiptaskbar = 0;
 unsigned int skippager = 0;
+unsigned int taskbaricon = 0;
 
 /*
  * word delimiter string
@@ -204,6 +205,7 @@ ResourcePref resources[] = {
     { "histsize",     INTEGER, &histsize },
     { "skiptaskbar",  INTEGER, &skiptaskbar },
     { "skippager",    INTEGER, &skippager },
+    { "taskbaricon",  INTEGER, &taskbaricon },
     { "termname",     STRING,  &termname },
     { "shell",        STRING,  &shell },
     { "xfps",         INTEGER, &xfps },
