@@ -21,6 +21,7 @@ static char *argv0;
 #include "arg.h"
 #include "st.h"
 #include "win.h"
+#include "icon.h"
 
 /* types used in config.h */
 typedef struct {
@@ -108,6 +109,7 @@ typedef struct {
   GlyphFontSpec *specbuf; /* font spec buffer used for rendering */
   Atom xembed, wmdeletewin, netwmname, netwmpid;
   Atom window_fullscreen, window_state, skip_taskbar, skip_pager;
+  Atom taskbar_icon_atom, cardinal_atom;
   XIM xim;
   XIC xic;
   Draw draw;
@@ -1048,6 +1050,53 @@ xunloadfonts(void)
   xunloadfont(&dc.ibfont);
 }
 
+#define RGBA_TO_ARGB(argb, source_pixel) \
+  argb = (unsigned long)(((source_pixel << 24) & 0xFF000000) | ((source_pixel >> 8) & 0x00FFFFFF))
+
+unsigned long *
+convert_pixmap(void)
+{
+
+  unsigned int len;
+  unsigned long *converted_icon_data = NULL;
+
+  len = (unsigned int)(tIconBytes.width*tIconBytes.height);
+  converted_icon_data = (unsigned long *)malloc(sizeof(unsigned long)*(len + 2));
+
+  bzero(converted_icon_data, (len + 2)*sizeof(unsigned long));
+
+  unsigned int index = 0;
+  converted_icon_data[index++] = (unsigned long)tIconBytes.width;
+  converted_icon_data[index++] = (unsigned long)tIconBytes.height;
+
+  unsigned int *pixmap_pointer = (unsigned int *)tIconBytes.pixel_data;
+
+  printf("Loading X11 Taskbar Icon");
+  for (int offset=0; offset<len; offset++) {
+    converted_icon_data[(index++) + 2] = pixmap_pointer[offset];
+  }
+
+  // return converted pixmap
+  return converted_icon_data;
+}
+
+void
+load_icon(void)
+{
+  // declare X11 atoms
+  xw.taskbar_icon_atom = XInternAtom(xw.dpy, "_NET_WM_ICON", False);
+  xw.cardinal_atom = XInternAtom(xw.dpy, "CARDINAL", False);
+
+  int pixmap_length = 2 + (tIconBytes.width * tIconBytes.height);
+
+  // change property
+  XChangeProperty(xw.dpy, xw.win,
+                  xw.taskbar_icon_atom,
+                  xw.cardinal_atom, 32,
+                  PropModeReplace,
+                  (unsigned char *)convert_pixmap(), pixmap_length);
+}
+
 void
 xinit(int cols, int rows)
 {
@@ -1202,6 +1251,8 @@ xinit(int cols, int rows)
   resettitle();
   XMapWindow(xw.dpy, xw.win);
   xhints();
+  if (taskbaricon != 0)
+    load_icon();
   XSync(xw.dpy, False);
 
   clock_gettime(CLOCK_MONOTONIC, &xsel.tclick1);
