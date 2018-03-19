@@ -90,6 +90,7 @@ void redraw(void);
 void draw(void);
 
 void iso14755(const Arg *);
+void go_fullscreen(const Arg *);
 void printscreen(const Arg *);
 void printsel(const Arg *);
 void sendbreak(const Arg *);
@@ -123,6 +124,7 @@ char *xstrdup(char *);
 
 void kscrolldown(const Arg *);
 void kscrollup(const Arg *);
+void histfree(void);
 
 int borderpx;
 

@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <sys/select.h>
@@ -46,7 +47,6 @@
 
 /* constants */
 #define ISO14755CMD   "rofi -l 1 -dmenu -p codepoint </dev/null"
-#define histsize  2000
 
 enum term_mode {
   MODE_WRAP        = 1 << 0,
@@ -122,7 +122,7 @@ typedef struct {
   int col;      /* nb col */
   Line *line;   /* screen */
   Line *alt;    /* alternate screen */
-  Line hist[histsize];   /* history buffer */
+  Line *hist;   /* history buffer */
   int histi;    /* history index */
   int scr;      /* scroll back */
   int *dirty;   /* dirtyness of lines */
@@ -1094,6 +1094,12 @@ kscrollup(const Arg* a)
 		selscroll(0, n);
 		tfulldirt();
 	}
+}
+
+void
+histfree(void) {
+  if (term.hist)
+    free(term.hist);
 }
 
 void
@@ -2644,9 +2650,15 @@ tresize(int col, int row)
   term.dirty = xrealloc(term.dirty, row * sizeof(*term.dirty));
   term.tabs = xrealloc(term.tabs, col * sizeof(*term.tabs));
 
+  /* allocate history buffer */
+  term.hist = (Line*)xrealloc(term.hist, histsize * sizeof(Line) + 1);
+  bzero(term.hist, (histsize * sizeof(Line) + 1));
+
   /* resize each row to new width, zero-pad if needed */
   for (i=0; i<histsize; i++) {
+    /* allocate line */
     term.hist[i] = xrealloc(term.hist[i], col * sizeof(Glyph));
+    /* initialize line contents */
     for (j=mincol; j<col; j++) {
       term.hist[i][j] = term.c.attr;
       term.hist[i][j].u = ' ';
