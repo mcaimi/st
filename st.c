@@ -260,10 +260,10 @@ xwrite(int fd, const char *s, size_t len)
 void *
 xmalloc(size_t len)
 {
-  void *p = malloc(len);
+  void *p;
 
-  if (!p)
-    die("Out of memory\n");
+  if (!(p = malloc(len)))
+    die("malloc %s\n", strerror(errno));
 
   return p;
 }
@@ -272,7 +272,7 @@ void *
 xrealloc(void *p, size_t len)
 {
   if ((p = realloc(p, len)) == NULL)
-    die("Out of memory\n");
+    die("realloc: %s\n", strerror(errno));
 
   return p;
 }
@@ -281,7 +281,7 @@ char *
 xstrdup(char *s)
 {
   if ((s = strdup(s)) == NULL)
-    die("Out of memory\n");
+    die("strdup: %s\n", strerror(errno));
 
   return s;
 }
@@ -450,6 +450,7 @@ selstart(int col, int row, int snap)
   selclear();
   sel.mode = SEL_EMPTY;
   sel.type = SEL_REGULAR;
+  sel.alt = IS_SET(MODE_ALTSCREEN);
   sel.snap = snap;
   sel.oe.x = sel.ob.x = col;
   sel.oe.y = sel.ob.y = row;
@@ -479,7 +480,6 @@ selextend(int col, int row, int type, int done)
   oldsey = sel.ne.y;
   oldtype = sel.type;
 
-  sel.alt = IS_SET(MODE_ALTSCREEN);
   sel.oe.x = col;
   sel.oe.y = row;
   selnormalize();
@@ -692,7 +692,7 @@ execsh(char *cmd, char **args)
   errno = 0;
   if ((pw = getpwuid(getuid())) == NULL) {
     if (errno)
-      die("getpwuid:%s\n", strerror(errno));
+      die("getpwuid: %s\n", strerror(errno));
     else
       die("who are you?\n");
   }
@@ -787,7 +787,7 @@ ttynew(char *line, char *cmd, char *out, char **args)
 
   if (line) {
     if ((cmdfd = open(line, O_RDWR)) < 0)
-      die("open line failed: %s\n", strerror(errno));
+      die("open line '%s' failed: %s\n", line, strerror(errno));
     dup2(cmdfd, 0);
     stty(args);
     return cmdfd;
@@ -799,7 +799,7 @@ ttynew(char *line, char *cmd, char *out, char **args)
 
   switch (pid = fork()) {
   case -1:
-    die("fork failed\n");
+    die("fork failed %s\n", strerror(errno));
     break;
   case 0:
     close(iofd);
@@ -977,8 +977,10 @@ tsetdirt(int top, int bot)
   LIMIT(top, 0, term.row-1);
   LIMIT(bot, 0, term.row-1);
 
-  for (i = top; i <= bot; i++)
+  for (i = top; i <= bot; i++){
+    fprintf(stderr, "tsetdirt(): i=%d\n", i);
     term.dirty[i] = 1;
+  }
 }
 
 void
@@ -999,6 +1001,7 @@ tsetdirtattr(int attr)
 void
 tfulldirt(void)
 {
+  fprintf(stderr, "tfulldirt(): histsize %d, term.row %d\n", histsize, term.row);
   tsetdirt(0, term.row-1);
 }
 
@@ -1136,6 +1139,7 @@ tscrollup(int orig, int n, int copyhist)
   Line temp;
 
   LIMIT(n, 0, term.bot-orig+1);
+  fprintf(stderr, "n=%d, term.bot=%d, orig=%d\n", n, term.bot, orig);
 
   if (copyhist) {
     term.histi = (term.histi + 1 ) % histsize;
