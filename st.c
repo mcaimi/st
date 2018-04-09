@@ -841,7 +841,7 @@ ttyread(void)
   if (buflen > 0)
     memmove(buf, buf + written, buflen);
 
-  if (term.scr > 0 && term.scr < (histsize - 1))
+  if (term.scr > 0 && (unsigned int)term.scr < (histsize - 1))
     term.scr++;
 
   return ret;
@@ -978,7 +978,6 @@ tsetdirt(int top, int bot)
   LIMIT(bot, 0, term.row-1);
 
   for (i = top; i <= bot; i++){
-    fprintf(stderr, "tsetdirt(): i=%d\n", i);
     term.dirty[i] = 1;
   }
 }
@@ -1001,7 +1000,6 @@ tsetdirtattr(int attr)
 void
 tfulldirt(void)
 {
-  fprintf(stderr, "tfulldirt(): histsize %d, term.row %d\n", histsize, term.row);
   tsetdirt(0, term.row-1);
 }
 
@@ -1031,8 +1029,9 @@ treset(void)
   }, .x = 0, .y = 0, .state = CURSOR_DEFAULT};
 
   memset(term.tabs, 0, term.col * sizeof(*term.tabs));
-  for (i = tabspaces; i < term.col; i += tabspaces)
+  for (i = tabspaces; i < (unsigned int)term.col; i += tabspaces)
     term.tabs[i] = 1;
+
   term.top = 0;
   term.bot = term.row - 1;
   term.mode = MODE_WRAP|MODE_UTF8;
@@ -1092,7 +1091,7 @@ kscrollup(const Arg* a)
 	if (n < 0)
 		n = term.row + n;
 
-	if (term.scr <= histsize-n) {
+	if ((unsigned int)term.scr <= histsize-n) {
 		term.scr += n;
 		selscroll(0, n);
 		tfulldirt();
@@ -1139,7 +1138,6 @@ tscrollup(int orig, int n, int copyhist)
   Line temp;
 
   LIMIT(n, 0, term.bot-orig+1);
-  fprintf(stderr, "n=%d, term.bot=%d, orig=%d\n", n, term.bot, orig);
 
   if (copyhist) {
     term.histi = (term.histi + 1 ) % histsize;
@@ -2619,7 +2617,7 @@ tresize(int col, int row)
 {
   int i, j;
   int minrow = MIN(row, term.row);
-  int mincol = MIN(col, term.col);
+  int mincol = MIN(0, term.col);
   int *bp;
   TCursor c;
 
