@@ -29,10 +29,6 @@
  #include <libutil.h>
 #endif
 
-#ifndef __OpenBSD__
-#define pledge(a,b) 0
-#endif
-
 /* Arbitrary sizes */
 #define UTF_INVALID   0xFFFD
 #define UTF_SIZ       4
