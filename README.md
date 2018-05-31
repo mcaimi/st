@@ -3,7 +3,7 @@ st - simple terminal
 st is a simple terminal emulator for X which sucks less.
 
 This is a WIP fork of Suckless' awesome [ST](http://st.suckless.org), with some added features built-in:
-  - Official patches that needed an update were updated to run in ST 0.8
+  - Official patches that needed an update were updated to run in ST 0.8.1
   - Number of rows and columns are read from Xresources
   - Custom history size via Xresources
   - Added skiptaskbar and skippager XResources options
