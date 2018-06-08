@@ -1100,7 +1100,7 @@ kscrollup(const Arg* a)
 	if (n < 0)
 		n = term.row + n;
 
-	if ((unsigned int)term.scr <= histsize-n) {
+	if ((term.histi - term.scr - n) > 0  && (unsigned int)term.scr <= (histsize-n)) {
 		term.scr += n;
 		selscroll(0, n);
 		tfulldirt();
@@ -2626,7 +2626,7 @@ tresize(int col, int row)
 {
   int i, j;
   int minrow = MIN(row, term.row);
-  int mincol = MIN(0, term.col);
+  int mincol = MIN(col, term.col);
   int *bp;
   TCursor c;
 
@@ -2662,11 +2662,11 @@ tresize(int col, int row)
   term.tabs = xrealloc(term.tabs, col * sizeof(*term.tabs));
 
   /* allocate history buffer */
-  term.hist = (Line*)xrealloc(term.hist, histsize * sizeof(Line) + 1);
-  bzero(term.hist, (histsize * sizeof(Line) + 1));
+  term.hist = (Line*)xrealloc(term.hist, (histsize+1) * sizeof(Line));
+  bzero(term.hist, ((histsize+1) * sizeof(Line)));
 
   /* resize each row to new width, zero-pad if needed */
-  for (i=0; i<histsize; i++) {
+  for (i=0; i < histsize; i++) {
     /* allocate line */
     term.hist[i] = xrealloc(term.hist[i], col * sizeof(Glyph));
     /* initialize line contents */
