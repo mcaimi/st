@@ -25,7 +25,7 @@ int borderperc = 20;
  * 4: value of shell in /etc/passwd
  * 5: value of shell in config.h
  */
-char *shell = (char *)"/bin/sh";
+char *shell = (char *)"/bin/bash";
 char *utmp = NULL;
 char *stty_args = (char *)"stty raw pass8 nl -echo -iexten -cstopb 38400";
 
