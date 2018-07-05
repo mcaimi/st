@@ -25,7 +25,7 @@ int borderperc = 20;
  * 4: value of shell in /etc/passwd
  * 5: value of shell in config.h
  */
-char *shell = (char *)"/bin/sh";
+char *shell = (char *)"/bin/bash";
 char *utmp = NULL;
 char *stty_args = (char *)"stty raw pass8 nl -echo -iexten -cstopb 38400";
 
@@ -81,6 +81,9 @@ static int bellvolume = 0;
 
 /* default TERM value */
 char *termname = "st-256color";
+
+/* default icon */
+char *icon = "st.png";
 
 /*
  * spaces per tab
@@ -206,6 +209,7 @@ ResourcePref resources[] = {
     { "skiptaskbar",  INTEGER, &skiptaskbar },
     { "skippager",    INTEGER, &skippager },
     { "taskbaricon",  INTEGER, &taskbaricon },
+    { "icon",         INTEGER, &icon },
     { "termname",     STRING,  &termname },
     { "shell",        STRING,  &shell },
     { "xfps",         INTEGER, &xfps },
