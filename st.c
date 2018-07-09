@@ -812,17 +812,16 @@ ttynew(char *line, char *cmd, char *out, char **args)
     close(s);
     close(m);
 #ifdef __OpenBSD__
-		if (pledge("stdio getpw proc exec", NULL) == -1)
-			die("pledge\n");
+		if (pledge("stdio getpw proc exec ps rpath wpath tty", NULL) == -1)
+			die("Failed to execute pledge() system call.\n");
 #endif
     execsh(cmd, args);
     break;
   default:
 #ifdef __OpenBSD__
-    if (pledge("stdio getpw proc exec", NULL) == -1)
-  		die("pledge\n");
+    if (pledge("stdio getpw proc exec ps rpath wpath tty", NULL) == -1)
+  		die("Failed to execute pledge() system call\n");
 #endif
-
     close(s);
     cmdfd = m;
     signal(SIGCHLD, sigchld);
