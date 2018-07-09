@@ -5,7 +5,7 @@
 ! These options only take effect on startup.
 st.termname:     st-256color
 ! if you do not set shell, precedence is: -e arg, utmp option, SHELL env var, /etc/passwd shell
-st.shell:        /bin/sh
+st.shell:        /bin/bash
 
 ! The following options options can be reloaded via USR1 signal.
 st.font:         Liberation Mono:pixelsize=12:antialias=true:autohint=true;
@@ -49,6 +49,8 @@ st.skippager:   0
 
 ! load taskbar icon
 st.taskbaricon:   0
+! icon (PNG only)
+st.icon: /tmp/st.png
 
 ! enable lua bridge
 st.enable_lua: 0
