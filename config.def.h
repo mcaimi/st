@@ -82,9 +82,6 @@ static int bellvolume = 0;
 /* default TERM value */
 char *termname = "st-256color";
 
-/* default icon */
-char *icon = "st.png";
-
 /*
  * spaces per tab
  *
@@ -208,8 +205,6 @@ ResourcePref resources[] = {
     { "histsize",     INTEGER, &histsize },
     { "skiptaskbar",  INTEGER, &skiptaskbar },
     { "skippager",    INTEGER, &skippager },
-    { "taskbaricon",  INTEGER, &taskbaricon },
-    { "icon",         INTEGER, &icon },
     { "termname",     STRING,  &termname },
     { "shell",        STRING,  &shell },
     { "xfps",         INTEGER, &xfps },
