@@ -47,11 +47,6 @@ st.skiptaskbar:   0
 ! Skip the DM pager
 st.skippager:   0
 
-! load taskbar icon
-st.taskbaricon:   0
-! icon (PNG only)
-st.icon: /tmp/st.png
-
 ! enable lua bridge
 st.enable_lua: 0
 ! lua source program to load at st startup
