@@ -8,7 +8,6 @@ This is a WIP fork of Suckless' awesome [ST](http://st.suckless.org), with some 
   - Custom history size via Xresources
   - Added skiptaskbar and skippager XResources options
   - Added support for Xorg fullscreen mode via F11 key
-  - Added X11 Dock Icon for desktops that support this feature
 
 This forks builds upon the offical ST release already patched with these [st-patches](https://st.suckless.org/patches/):
   - st background alpha
