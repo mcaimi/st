@@ -26,7 +26,6 @@ st.actionfps:    30
 st.chscale:      1.0
 st.cwscale:      1.0
 st.blinktimeout: 800
-st.bellvolume:   100
 ! this is a char that is exposed like so: `printf '\033[z'`
 st.prompt_char:  $
 
@@ -46,11 +45,6 @@ st.skiptaskbar:   0
 
 ! Skip the DM pager
 st.skippager:   0
-
-! enable lua bridge
-st.enable_lua: 0
-! lua source program to load at st startup
-st.lua_code_file: /usr/share/st/sthook.lua
 
 ! opacity==255 means what terminal will be not transparent, 0 - fully transparent
 st.opacity:      255
