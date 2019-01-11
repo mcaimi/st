@@ -767,12 +767,12 @@ xloadcols(void)
   static int loaded;
   Color *cp;
 
-  dc.collen = MAX(LEN(colorname), 256);
-  dc.col = xmalloc(dc.collen * sizeof(Color));
-
   if (loaded) {
     for (cp = dc.col; cp < &dc.col[dc.collen]; ++cp)
       XftColorFree(xw.dpy, xw.vis, xw.cmap, cp);
+  } else {
+    dc.collen = MAX(LEN(colorname), 256);
+    dc.col = xmalloc(dc.collen * sizeof(Color));
   }
 
   for (i = 0; i < dc.collen; i++)
@@ -1986,10 +1986,8 @@ resource_load(XrmDatabase db, char *name, enum resource_type rtype, void *dst)
   char *type;
   XrmValue ret;
 
-  snprintf(fullname, sizeof(fullname), "%s.%s",
-      opt_name ? opt_name : "st", name);
-  snprintf(fullclass, sizeof(fullclass), "%s.%s",
-      opt_class ? opt_class : "St", name);
+  snprintf(fullname, sizeof(fullname), "%s.%s", opt_name ? opt_name : "st", name);
+  snprintf(fullclass, sizeof(fullclass), "%s.%s", opt_class ? opt_class : "St", name);
   fullname[sizeof(fullname) - 1] = fullclass[sizeof(fullclass) - 1] = '\0';
 
   XrmGetResource(db, fullname, fullclass, &type, &ret);

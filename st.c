@@ -17,6 +17,7 @@
 #include <termios.h>
 #include <unistd.h>
 #include <wchar.h>
+#include <regex.h>
 
 #include "st.h"
 #include "win.h"
@@ -208,6 +209,7 @@ static void tdefutf8(char);
 static int32_t tdefcolor(int *, int *, int);
 static void tdeftran(char);
 static void tstrsequence(uchar);
+static void tsetcolor(int, int, int, uint32_t, uint32_t);
 
 static void drawregion(int, int, int, int);
 
@@ -403,7 +405,7 @@ base64dec(const char *src)
 
   if (in_len % 4)
     in_len += 4 - (in_len % 4);
-  result = dst = xmalloc(in_len / 4 * 3 + 1);
+  result = dst = (char *)xmalloc(in_len / 4 * 3 + 1);
   while (*src) {
     int a = base64_digits[(unsigned char) base64dec_getc(&src)];
     int b = base64_digits[(unsigned char) base64dec_getc(&src)];
@@ -420,6 +422,17 @@ base64dec(const char *src)
   }
   *dst = '\0';
   return result;
+}
+
+void
+tsetcolor( int row, int start, int end, uint32_t fg, uint32_t bg )
+{
+	int i = start;
+	for( ; i < end; ++i )
+	{
+		term.line[row][i].fg = fg;
+		term.line[row][i].bg = bg;
+	}
 }
 
 void
@@ -740,8 +753,10 @@ sigchld(int a)
   if (pid != p)
     return;
 
-  if (!WIFEXITED(stat) || WEXITSTATUS(stat))
-    die("child finished with error '%d'\n", stat);
+  if (WIFEXITED(stat) && WEXITSTATUS(stat))
+    die("child exited with status %d\n", WEXITSTATUS(stat));
+  else if (WIFSIGNALED(stat))
+    die("child terminated due to signal %d\n", WTERMSIG(stat));
   exit(0);
 }
 
@@ -812,15 +827,15 @@ ttynew(char *line, char *cmd, char *out, char **args)
     close(s);
     close(m);
 #ifdef __OpenBSD__
-		if (pledge("stdio getpw proc exec ps rpath wpath tty", NULL) == -1)
-			die("Failed to execute pledge() system call.\n");
+    if (pledge("stdio getpw proc exec ps rpath wpath tty", NULL) == -1)
+      die("Failed to execute pledge() system call.\n");
 #endif
     execsh(cmd, args);
     break;
   default:
 #ifdef __OpenBSD__
     if (pledge("stdio getpw proc exec ps rpath wpath tty", NULL) == -1)
-  		die("Failed to execute pledge() system call\n");
+      die("Failed to execute pledge() system call\n");
 #endif
     close(s);
     cmdfd = m;
@@ -1076,34 +1091,34 @@ tswapscreen(void)
 void
 kscrolldown(const Arg* a)
 {
-	int n = a->i;
+  int n = a->i;
 
-	if (n < 0)
-		n = term.row + n;
+  if (n < 0)
+    n = term.row + n;
 
-	if (n > term.scr)
-		n = term.scr;
+  if (n > term.scr)
+    n = term.scr;
 
-	if (term.scr > 0) {
-		term.scr -= n;
-		selscroll(0, -n);
-		tfulldirt();
-	}
+  if (term.scr > 0) {
+    term.scr -= n;
+    selscroll(0, -n);
+    tfulldirt();
+  }
 }
 
 void
 kscrollup(const Arg* a)
 {
-	int n = a->i;
+  int n = a->i;
 
-	if (n < 0)
-		n = term.row + n;
+  if (n < 0)
+    n = term.row + n;
 
-	if ((term.histi - term.scr - n) > 0  && (unsigned int)term.scr <= (histsize-n)) {
-		term.scr += n;
-		selscroll(0, n);
-		tfulldirt();
-	}
+  if ((term.histi - term.scr - n) > 0  && (unsigned int)term.scr <= (histsize-n)) {
+    term.scr += n;
+    selscroll(0, n);
+    tfulldirt();
+  }
 }
 
 void
@@ -2767,3 +2782,4 @@ redraw(void)
   tfulldirt();
   draw();
 }
+
