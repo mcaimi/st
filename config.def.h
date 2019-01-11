@@ -42,7 +42,6 @@ unsigned int histsize = 2000;
 /* skip taskbar and pager options */
 unsigned int skiptaskbar = 0;
 unsigned int skippager = 0;
-unsigned int taskbaricon = 0;
 
 /*
  * word delimiter string
