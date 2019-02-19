@@ -427,12 +427,12 @@ base64dec(const char *src)
 void
 tsetcolor( int row, int start, int end, uint32_t fg, uint32_t bg )
 {
-	int i = start;
-	for( ; i < end; ++i )
-	{
-		term.line[row][i].fg = fg;
-		term.line[row][i].bg = bg;
-	}
+  int i = start;
+  for( ; i < end; ++i )
+  {
+    term.line[row][i].fg = fg;
+    term.line[row][i].bg = bg;
+  }
 }
 
 void
@@ -2774,6 +2774,7 @@ draw(void)
   }
   term.ocx = cx, term.ocy = term.c.y;
   xfinishdraw();
+  xximspot(term.ocx, term.ocy);
 }
 
 void
