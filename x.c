@@ -244,8 +244,9 @@ typedef struct {
 } Fontcache;
 
 /* Fontcache is an array now. A new font will be appended to the array. */
-static Fontcache frc[16];
+static Fontcache *frc = NULL;
 static int frclen = 0;
+static int frccap = 0;
 static char *usedfont = NULL;
 static double usedfontsize = 0;
 static double defaultfontsize = 0;
@@ -1345,8 +1346,13 @@ xmakeglyphfontspecs(XftGlyphFontSpec *specs, const Glyph *glyphs, int len, int x
       /*
        * Overwrite or create the new cache entry.
        */
-      if (frclen >= LEN(frc)) {
-        frclen = LEN(frc) - 1;
+      if (frclen >= frccap) {
+        frccap += 16;
+        if (!frc) {
+          frc = xmalloc(frccap * sizeof(Fontcache));
+        } else {
+          frc = xrealloc(frc, frccap * sizeof(Fontcache));
+        }
         XftFontClose(xw.dpy, frc[frclen].font);
         frc[frclen].unicodep = 0;
       }
