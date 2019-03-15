@@ -44,11 +44,11 @@ unsigned int skiptaskbar = 0;
 unsigned int skippager = 0;
 
 /*
- * word delimiter string
+ * all punctuation are considered word delimiters, unless listed here
  *
- * More advanced example: " `'\"()[]{}"
+ * More advanced example: L"#$%&+,-./:=?_~"
  */
-char *worddelimiters = " ";
+wchar_t *worddelimiters = L" ";
 
 /* selection timeouts (in milliseconds) */
 static unsigned int doubleclicktimeout = 300;
