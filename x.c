@@ -1348,13 +1348,7 @@ xmakeglyphfontspecs(XftGlyphFontSpec *specs, const Glyph *glyphs, int len, int x
        */
       if (frclen >= frccap) {
         frccap += 16;
-        if (!frc) {
-          frc = xmalloc(frccap * sizeof(Fontcache));
-        } else {
-          frc = xrealloc(frc, frccap * sizeof(Fontcache));
-        }
-        XftFontClose(xw.dpy, frc[frclen].font);
-        frc[frclen].unicodep = 0;
+        frc = xrealloc(frc, frccap * sizeof(Fontcache));
       }
 
       frc[frclen].font = XftFontOpenPattern(xw.dpy,
