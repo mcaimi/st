@@ -113,8 +113,6 @@ void selextend(int, int, int, int);
 int selected(int, int);
 char *getsel(void);
 
-size_t utf8encode(Rune, char *);
-
 void *xmalloc(size_t);
 void *xrealloc(void *, size_t);
 char *xstrdup(char *);
@@ -123,13 +121,15 @@ void kscrolldown(const Arg *);
 void kscrollup(const Arg *);
 void histfree(void);
 
+size_t utf8encode(Rune, char *);
+
 int borderpx;
 
 /* config.h globals */
 extern char *utmp;
 extern char *stty_args;
 extern char *vtiden;
-extern char *worddelimiters;
+extern wchar_t *worddelimiters;
 extern int allowaltscreen;
 extern char *termname;
 extern unsigned int tabspaces;
