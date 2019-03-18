@@ -140,3 +140,4 @@ extern char *shell;
 extern int borderperc;
 extern unsigned int histsize;
 extern MouseKey mkeys[];
+extern int debug;

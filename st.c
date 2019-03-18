@@ -1969,8 +1969,10 @@ strhandle(void)
     return;
   }
 
-  fprintf(stderr, "erresc: unknown str ");
-  strdump();
+  if (debug) { 
+    fprintf(stderr, "erresc: unknown str "); 
+    strdump();
+  }
 }
 
 void

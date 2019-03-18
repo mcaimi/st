@@ -17,6 +17,11 @@ int disableroman = 0;
 
 int borderperc = 20;
 
+/* debug flag: if set to zero, some error messages will be silenced 
+ * (such as unknown control codes in the terminal)
+ */
+int debug = 0;
+
 /*
  * What program is execed by st depends of these precedence rules:
  * 1: program passed with -e
@@ -217,6 +222,7 @@ ResourcePref resources[] = {
     { "disablebold",  INTEGER, &disablebold },
     { "disableroman", INTEGER, &disableroman },
     { "disableitalic",INTEGER, &disableitalic },
+    { "debug",        INTEGER, &debug },
 };
 
 /*

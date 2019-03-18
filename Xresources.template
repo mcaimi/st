@@ -11,6 +11,9 @@ st.shell:        /bin/bash
 st.font:         Liberation Mono:pixelsize=12:antialias=true:autohint=true;
 st.borderperc:   20
 
+! enable verbose error statements
+st.debug:        0
+
 ! Available cursor values: 2 4 6 7 = █ _ | ☃ ( 1 3 5 are blinking versions)
 st.cursorshape:  2
 st.cursorthickness:  2
