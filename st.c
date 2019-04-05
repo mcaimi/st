@@ -1056,6 +1056,11 @@ void
 tnew(int col, int row)
 {
   term = (Term){ .c = { .attr = { .fg = defaultfg, .bg = defaultbg } } };
+
+  /* allocate history buffer */
+  term.hist = (Line*)xrealloc(term.hist, (histsize+1) * sizeof(Line));
+  bzero(term.hist, ((histsize+1) * sizeof(Line)));
+
   tresize(col, row);
   treset();
 }
@@ -2660,10 +2665,6 @@ tresize(int col, int row)
   term.alt  = xrealloc(term.alt,  row * sizeof(Line));
   term.dirty = xrealloc(term.dirty, row * sizeof(*term.dirty));
   term.tabs = xrealloc(term.tabs, col * sizeof(*term.tabs));
-
-  /* allocate history buffer */
-  term.hist = (Line*)xrealloc(term.hist, (histsize+1) * sizeof(Line));
-  bzero(term.hist, ((histsize+1) * sizeof(Line)));
 
   /* resize each row to new width, zero-pad if needed */
   for (i=0; i < histsize; i++) {
