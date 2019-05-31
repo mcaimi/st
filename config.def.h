@@ -223,6 +223,7 @@ ResourcePref resources[] = {
     { "disableroman", INTEGER, &disableroman },
     { "disableitalic",INTEGER, &disableitalic },
     { "debug",        INTEGER, &debug },
+    { "borderperc",   INTEGER, &borderperc },
 };
 
 /*
