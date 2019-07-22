@@ -93,6 +93,7 @@ typedef XftGlyphFontSpec GlyphFontSpec;
 typedef struct {
   int tw, th; /* tty width and height */
   int w, h; /* window width and height */
+  int dynborder_h, dynborder_w; /* dynamic border size */
   int ch; /* char height */
   int cw; /* char width  */
   int cyo; /* char y offset */
@@ -338,7 +339,7 @@ zoomreset(const Arg *arg)
 int
 evcol(XEvent *e)
 {
-  int x = e->xbutton.x - borderpx;
+  int x = e->xbutton.x - win.dynborder_w;
   LIMIT(x, 0, win.tw - 1);
   return x / win.cw;
 }
@@ -346,7 +347,7 @@ evcol(XEvent *e)
 int
 evrow(XEvent *e)
 {
-  int y = e->xbutton.y - borderpx;
+  int y = e->xbutton.y - win.dynborder_h;
   LIMIT(y, 0, win.th - 1);
   return y / win.ch;
 }
@@ -713,6 +714,9 @@ cresize(int width, int height)
   col = MAX(1, col);
   row = MAX(1, row);
 
+  win.dynborder_w = (win.w - col * win.cw) / 2;
+  win.dynborder_h = (win.h - row * win.ch) / 2;
+
   tresize(col, row);
   xresize(col, row);
   ttyresize(win.tw, win.th);
@@ -819,8 +823,8 @@ xtermclear(int col1, int row1, int col2, int row2)
 {
   XftDrawRect(xw.draw,
       &dc.col[IS_SET(MODE_REVERSE) ? defaultfg : defaultbg],
-      borderpx + col1 * win.cw,
-      borderpx + row1 * win.ch,
+      win.dynborder_w + col1 * win.cw,
+      win.dynborder_h + row1 * win.ch,
       (col2-col1+1) * win.cw,
       (row2-row1+1) * win.ch);
 }
@@ -851,10 +855,10 @@ xhints(void)
   sizeh->width = win.w;
   sizeh->height_inc = win.ch;
   sizeh->width_inc = win.cw;
-  sizeh->base_height = 2 * borderpx;
-  sizeh->base_width = 2 * borderpx;
-  sizeh->min_height = win.ch + 2 * borderpx;
-  sizeh->min_width = win.cw + 2 * borderpx;
+  sizeh->base_height = 2 * win.dynborder_w;
+  sizeh->base_width = 2 * win.dynborder_h;
+  sizeh->min_height = win.ch + 2 * win.dynborder_h;
+  sizeh->min_width = win.cw + 2 * win.dynborder_w;
   if (xw.isfixed) {
     sizeh->flags |= PMaxSize;
     sizeh->min_width = sizeh->max_width = win.w;
@@ -1156,8 +1160,8 @@ xinit(int cols, int rows)
   xloadcols();
 
   /* adjust fixed window geometry */
-  win.w = 2 * borderpx + cols * win.cw;
-  win.h = 2 * borderpx + rows * win.ch;
+  win.w = 2 * win.dynborder_w + cols * win.cw;
+  win.h = 2 * win.dynborder_h + rows * win.ch;
   if (xw.gm & XNegative)
     xw.l += DisplayWidth(xw.dpy, xw.scr) - win.w - 2;
   if (xw.gm & YNegative)
@@ -1248,7 +1252,7 @@ xinit(int cols, int rows)
 int
 xmakeglyphfontspecs(XftGlyphFontSpec *specs, const Glyph *glyphs, int len, int x, int y)
 {
-  float winx = borderpx + x * win.cw, winy = borderpx + y * win.ch, xp, yp;
+  float winx = win.dynborder_w + x * win.cw, winy = win.dynborder_h + y * win.ch, xp, yp;
   ushort mode, prevmode = USHRT_MAX;
   Font *font = &dc.font;
   int frcflags = FRC_NORMAL;
@@ -1383,7 +1387,7 @@ void
 xdrawglyphfontspecs(const XftGlyphFontSpec *specs, Glyph base, int len, int x, int y)
 {
   int charlen = len * ((base.mode & ATTR_WIDE) ? 2 : 1);
-  int winx = borderpx + x * win.cw, winy = borderpx + y * win.ch,
+  int winx = win.dynborder_w + x * win.cw, winy = win.dynborder_h + y * win.ch,
       width = charlen * win.cw;
   Color *fg, *bg, *temp, revfg, revbg, truefg, truebg;
   XRenderColor colfg, colbg;
@@ -1478,17 +1482,17 @@ xdrawglyphfontspecs(const XftGlyphFontSpec *specs, Glyph base, int len, int x, i
 
   /* Intelligent cleaning up of the borders. */
   if (x == 0) {
-    xclear(0, (y == 0)? 0 : winy, borderpx,
+    xclear(0, (y == 0)? 0 : winy, win.dynborder_h,
       winy + win.ch +
-      ((winy + win.ch >= borderpx + win.th)? win.h : 0));
+      ((winy + win.ch >= win.dynborder_h + win.th)? win.h : 0));
   }
-  if (winx + width >= borderpx + win.tw) {
+  if (winx + width >= win.dynborder_w + win.tw) {
     xclear(winx + width, (y == 0)? 0 : winy, win.w,
-      ((winy + win.ch >= borderpx + win.th)? win.h : (winy + win.ch)));
+      ((winy + win.ch >= win.dynborder_w + win.th)? win.h : (winy + win.ch)));
   }
   if (y == 0)
-    xclear(winx, 0, winx + width, borderpx);
-  if (winy + win.ch >= borderpx + win.th)
+    xclear(winx, 0, winx + width, win.dynborder_w);
+  if (winy + win.ch >= win.dynborder_h + win.th)
     xclear(winx, winy + win.ch, winx + width, win.h);
 
   /* Clean up the region we want to draw to. */
@@ -1581,35 +1585,35 @@ xdrawcursor(int cx, int cy, Glyph g, int ox, int oy, Glyph og)
     case 3: /* Blinking Underline */
     case 4: /* Steady Underline */
       XftDrawRect(xw.draw, &drawcol,
-          borderpx + cx * win.cw,
-          borderpx + (cy + 1) * win.ch - \
+          win.dynborder_w + cx * win.cw,
+          win.dynborder_h + (cy + 1) * win.ch - \
             cursorthickness,
           win.cw, cursorthickness);
       break;
     case 5: /* Blinking bar */
     case 6: /* Steady bar */
       XftDrawRect(xw.draw, &drawcol,
-          borderpx + cx * win.cw,
-          borderpx + cy * win.ch,
+          win.dynborder_w + cx * win.cw,
+          win.dynborder_h + cy * win.ch,
           cursorthickness, win.ch);
       break;
     }
   } else {
     XftDrawRect(xw.draw, &drawcol,
-        borderpx + cx * win.cw,
-        borderpx + cy * win.ch,
+        win.dynborder_w + cx * win.cw,
+        win.dynborder_h + cy * win.ch,
         win.cw - 1, 1);
     XftDrawRect(xw.draw, &drawcol,
-        borderpx + cx * win.cw,
-        borderpx + cy * win.ch,
+        win.dynborder_w + cx * win.cw,
+        win.dynborder_h + cy * win.ch,
         1, win.ch - 1);
     XftDrawRect(xw.draw, &drawcol,
-        borderpx + (cx + 1) * win.cw - 1,
-        borderpx + cy * win.ch,
+        win.dynborder_w + (cx + 1) * win.cw - 1,
+        win.dynborder_h + cy * win.ch,
         1, win.ch - 1);
     XftDrawRect(xw.draw, &drawcol,
-        borderpx + cx * win.cw,
-        borderpx + (cy + 1) * win.ch - 1,
+        win.dynborder_w + cx * win.cw,
+        win.dynborder_h + (cy + 1) * win.ch - 1,
         win.cw, 1);
   }
 }
@@ -1686,11 +1690,11 @@ xfinishdraw(void)
 void
 xximspot(int x, int y)
 {
-	XPoint spot = { borderpx + x * win.cw, borderpx + (y + 1) * win.ch };
-	XVaNestedList attr = XVaCreateNestedList(0, XNSpotLocation, &spot, NULL);
+  XPoint spot = { win.dynborder_w + x * win.cw, win.dynborder_h + (y + 1) * win.ch };
+  XVaNestedList attr = XVaCreateNestedList(0, XNSpotLocation, &spot, NULL);
 
-	XSetICValues(xw.xic, XNPreeditAttributes, attr, NULL);
-	XFree(attr);
+  XSetICValues(xw.xic, XNPreeditAttributes, attr, NULL);
+  XFree(attr);
 }
 
 void
