@@ -1257,8 +1257,8 @@ xinit(int cols, int rows)
 
   win.mode = MODE_NUMLOCK;
   resettitle();
-  XMapWindow(xw.dpy, xw.win);
   xhints();
+  XMapWindow(xw.dpy, xw.win);
   XSync(xw.dpy, False);
 
   clock_gettime(CLOCK_MONOTONIC, &xsel.tclick1);
