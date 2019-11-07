@@ -231,9 +231,9 @@ ResourcePref resources[] = {
  * Beware that overloading Button1 will disable the selection.
  */
 static MouseShortcut mshortcuts[] = {
-  /* button               mask            string */
-  { Button4,              XK_NO_MOD,     "\031" },
-  { Button5,              XK_NO_MOD,     "\005" },
+  /* button               mask            function     argument */
+  { Button4,              XK_NO_MOD,      ttysend,      {.s = "\031"} },
+  { Button5,              XK_NO_MOD,      ttysend,      {.s = "\005"} },
 };
 
 MouseKey mkeys[] = {
