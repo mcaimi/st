@@ -35,6 +35,7 @@ typedef struct {
   uint mask;
   void (*func)(const Arg *);
   const Arg arg;
+  uint release;
 } MouseShortcut;
 
 typedef struct {
@@ -73,6 +74,7 @@ static void zoom(const Arg *);
 static void zoomabs(const Arg *);
 static void zoomreset(const Arg *);
 static void ttysend(const Arg *arg);
+static int mouseaction(XEvent *e, uint release);
 
 /* config.h for applying patches and the configuration. */
 #include "config.h"
@@ -344,6 +346,22 @@ ttysend(const Arg *arg)
   ttywrite(arg->s, strlen(arg->s), 1);
 }
 
+static int
+mouseaction(XEvent *e, uint release)
+{
+  MouseShortcut *ms;
+
+  for (ms = mshortcuts; ms < mshortcuts + LEN(mshortcuts); ms++) {
+    if (e->xbutton.button == ms->button
+        && (match(ms->mask, e->xbutton.button) || match(ms->mask, e->xbutton.state & ~forcemousemod))) {
+      ms->func(&(ms->arg));
+      return 1;
+    }
+  }
+
+  return 0;
+}
+
 int
 evcol(XEvent *e)
 {
@@ -364,7 +382,7 @@ void
 mousesel(XEvent *e, int done)
 {
   int type, seltype = SEL_REGULAR;
-  uint state = e->xbutton.state & ~(Button1Mask | forceselmod);
+  uint state = e->xbutton.state & ~(Button1Mask | forcemousemod);
 
   for (type = 1; type < LEN(selmasks); ++type) {
     if (match(selmasks[type], state)) {
@@ -448,7 +466,7 @@ bpress(XEvent *e)
   MouseKey *mk;
   int snap;
 
-  if (IS_SET(MODE_MOUSE) && !(e->xbutton.state & forceselmod)) {
+  if (IS_SET(MODE_MOUSE) && !(e->xbutton.state & forcemousemod)) {
     mousereport(e);
     return;
   }
@@ -461,13 +479,8 @@ bpress(XEvent *e)
     }
   }
 
-  for (ms = mshortcuts; ms < mshortcuts + LEN(mshortcuts); ms++) {
-    if (e->xbutton.button == ms->button
-        && match(ms->mask, e->xbutton.state)) {
-      ms->func(&(ms->arg));
-      return;
-    }
-  }
+  if (mouseaction(e, 0))
+    return;
 
   if (e->xbutton.button == Button1) {
     /*
@@ -685,21 +698,21 @@ xsetsel(char *str)
 void
 brelease(XEvent *e)
 {
-  if (IS_SET(MODE_MOUSE) && !(e->xbutton.state & forceselmod)) {
+  if (IS_SET(MODE_MOUSE) && !(e->xbutton.state & forcemousemod)) {
     mousereport(e);
     return;
   }
 
-  if (e->xbutton.button == Button2)
-    selpaste(NULL);
-  else if (e->xbutton.button == Button1)
+  if (mouseaction(e, 1))
+    return;
+  if (e->xbutton.button == Button1)
     mousesel(e, 1);
 }
 
 void
 bmotion(XEvent *e)
 {
-  if (IS_SET(MODE_MOUSE) && !(e->xbutton.state & forceselmod)) {
+  if (IS_SET(MODE_MOUSE) && !(e->xbutton.state & forcemousemod)) {
     mousereport(e);
     return;
   }
