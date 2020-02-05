@@ -65,6 +65,9 @@ typedef struct {
 #define XK_NO_MOD     0
 #define XK_SWITCH_MOD (1<<13)
 
+// alpha value
+unsigned int currentAlpha;
+
 /* function definitions used in config.h */
 static void clipcopy(const Arg *);
 static void clippaste(const Arg *);
@@ -814,9 +817,10 @@ xloadcols(void)
 
   /* set alpha value of bg color */
   if (USE_ARGB) {
-    dc.col[defaultbg].color.alpha = (0xffff * alpha) / OPAQUE;
+    currentAlpha = is_focused ? alpha : alpha_unfocused;
+    dc.col[defaultbg].color.alpha = (0xffff * currentAlpha) / OPAQUE;
     dc.col[defaultbg].pixel &= 0x00111111;
-    dc.col[defaultbg].pixel |= alpha << 24;
+    dc.col[defaultbg].pixel |= currentAlpha << 24;
   }
   loaded = 1;
 }
@@ -1797,11 +1801,21 @@ focus(XEvent *ev)
     xseturgency(0);
     if (IS_SET(MODE_FOCUS))
       ttywrite("\033[I", 3, 0);
+    if (!is_focused) {
+        is_focused = 1;
+        xloadcols();
+        redraw();
+    }
   } else {
     XUnsetICFocus(xw.xic);
     win.mode &= ~MODE_FOCUSED;
     if (IS_SET(MODE_FOCUS))
       ttywrite("\033[O", 3, 0);
+    if (is_focused) {
+      is_focused = 0;
+      xloadcols();
+      redraw();
+    }
   }
 }
 
@@ -2302,7 +2316,7 @@ main(int argc, char *argv[])
 run:
   if (argc > 0) /* eat all remaining arguments */
     opt_cmd = argv;
-  
+
   if (!opt_title && !opt_line)
     opt_title = (opt_line || !opt_cmd) ? "st" : opt_cmd[0];
 

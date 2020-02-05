@@ -105,6 +105,7 @@ unsigned int tabspaces = 8;
 
 /* background alpha value */
 unsigned int alpha = 0xcc; /* 0xFF is no transparency */
+unsigned int alpha_unfocused = 0xaa; /* this value is applied to a window if it is unfocused */
 
 /* Terminal colors (16 first used in escape sequence) */
 static const char *colorname[] = {
@@ -217,6 +218,7 @@ ResourcePref resources[] = {
     { "bellvolume",   INTEGER, &bellvolume },
     { "tabspaces",    INTEGER, &tabspaces },
     { "opacity",      INTEGER, &alpha },
+    { "unfocused_opacity",      INTEGER, &alpha_unfocused },
     { "cwscale",      FLOAT,   &cwscale },
     { "chscale",      FLOAT,   &chscale },
     { "disablebold",  INTEGER, &disablebold },
@@ -547,3 +549,8 @@ static char ascii_printable[] =
   " !\"#$%&'()*+,-./0123456789:;<=>?"
   "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_"
   "`abcdefghijklmnopqrstuvwxyz{|}~";
+
+/*
+ *  flag that tracks whether the current window is focused or not
+ */
+static unsigned int is_focused = 1;
