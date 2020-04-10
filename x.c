@@ -17,7 +17,7 @@
 #include <X11/XKBlib.h>
 #include <X11/Xresource.h>
 
-static char *argv0;
+char *argv0;
 #include "arg.h"
 #include "st.h"
 #include "win.h"
@@ -197,6 +197,7 @@ static void selnotify(XEvent *);
 static void selclear_(XEvent *);
 static void selrequest(XEvent *);
 static void setsel(char *, Time);
+static uint buttonmask(uint);
 static void mousesel(XEvent *, int);
 static void mousereport(XEvent *);
 static char *kmap(KeySym, uint);
@@ -349,14 +350,29 @@ ttysend(const Arg *arg)
   ttywrite(arg->s, strlen(arg->s), 1);
 }
 
+uint
+buttonmask(uint button)
+{
+  return button == Button1 ? Button1Mask
+       : button == Button2 ? Button2Mask
+       : button == Button3 ? Button3Mask
+       : button == Button4 ? Button4Mask
+       : button == Button5 ? Button5Mask
+       : 0;
+}
+
 static int
 mouseaction(XEvent *e, uint release)
 {
   MouseShortcut *ms;
 
+  /* ignore Button<N>mask for Button<N> - it's set on release */
+  uint state = e->xbutton.state & ~buttonmask(e->xbutton.button);
+
   for (ms = mshortcuts; ms < mshortcuts + LEN(mshortcuts); ms++) {
-    if (e->xbutton.button == ms->button
-        && (match(ms->mask, e->xbutton.button) || match(ms->mask, e->xbutton.state & ~forcemousemod))) {
+    if (ms->release == release && e->xbutton.button == ms->button && 
+        (match(ms->mask, state) ||  /* exact or forced */
+         match(ms->mask, state & ~forcemousemod))) {
       ms->func(&(ms->arg));
       return 1;
     }
@@ -1867,7 +1883,7 @@ kpress(XEvent *ev)
 {
   XKeyEvent *e = &ev->xkey;
   KeySym ksym;
-  char buf[32], *customkey;
+  char buf[64], *customkey;
   int len;
   Rune c;
   Status status;
