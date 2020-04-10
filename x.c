@@ -116,8 +116,12 @@ typedef struct {
   GlyphFontSpec *specbuf; /* font spec buffer used for rendering */
   Atom xembed, wmdeletewin, netwmname, netwmpid;
   Atom window_fullscreen, window_state, skip_taskbar, skip_pager;
-  XIM xim;
-  XIC xic;
+  struct {
+    XIM xim;
+    XIC xic;
+    XPoint spot;
+    XVaNestedList spotlist;
+  } ime;
   Draw draw;
   Visual *vis;
   XSetWindowAttributes attrs;
@@ -165,9 +169,10 @@ static void xdrawglyphfontspecs(const XftGlyphFontSpec *, Glyph, int, int, int);
 static void xdrawglyph(Glyph, int, int);
 static void xclear(int, int, int, int);
 static int xgeommasktogravity(int);
-static void ximopen(Display *);
+static int ximopen(Display *);
 static void ximinstantiate(Display *, XPointer, XPointer);
 static void ximdestroy(XIM, XPointer, XPointer);
+static int xicdestroy(XIC, XPointer, XPointer);
 static void xinit(int, int);
 static void cresize(int, int);
 static void xresize(int, int);
@@ -1103,41 +1108,55 @@ xunloadfonts(void)
   xunloadfont(&dc.ibfont);
 }
 
-void
+int
 ximopen(Display *dpy)
 {
-  XIMCallback destroy = { .client_data = NULL, .callback = ximdestroy };
+  XIMCallback imdestroy = { .client_data = NULL, .callback = ximdestroy };
+  XICCallback icdestroy = { .client_data = NULL, .callback = xicdestroy };
 
-  if ((xw.xim = XOpenIM(xw.dpy, NULL, NULL, NULL)) == NULL) {
-    XSetLocaleModifiers("@im=local");
-    if ((xw.xim = XOpenIM(xw.dpy, NULL, NULL, NULL)) == NULL) {
-      XSetLocaleModifiers("@im=");
-      if ((xw.xim = XOpenIM(xw.dpy, NULL, NULL, NULL)) == NULL)
-        die("XOpenIM failed. Could not open input device.\n");
-    }
+  xw.ime.xim = XOpenIM(xw.dpy, NULL, NULL, NULL);
+  if (xw.ime.xim == NULL)
+    return 0;
+
+  if (XSetIMValues(xw.ime.xim, XNDestroyCallback, &imdestroy, NULL))
+    fprintf(stderr, "XSetIMValues: "
+                    "Could not set XNDestroyCallback.\n");
+
+  xw.ime.spotlist = XVaCreateNestedList(0, XNSpotLocation, &xw.ime.spot, NULL);
+
+  if (xw.ime.xic == NULL) {
+    xw.ime.xic = XCreateIC(xw.ime.xim, XNInputStyle,
+                           XIMPreeditNothing | XIMStatusNothing,
+                           XNClientWindow, xw.win,
+                           XNDestroyCallback, &icdestroy,
+                           NULL);
   }
-  if (XSetIMValues(xw.xim, XNDestroyCallback, &destroy, NULL) != NULL)
-    die("XSetIMValues failed. Could not set input method value.\n");
-  xw.xic = XCreateIC(xw.xim, XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
-        XNClientWindow, xw.win, XNFocusWindow, xw.win, NULL);
-  if (xw.xic == NULL)
-    die("XCreateIC failed. Could not obtain input method.\n");
+  if (xw.ime.xic == NULL)
+    fprintf(stderr, "XCreateIC: Could not create input context.\n");
+
+  return 1;
 }
 
 void
 ximinstantiate(Display *dpy, XPointer client, XPointer call)
 {
-  ximopen(dpy);
-  XUnregisterIMInstantiateCallback(xw.dpy, NULL, NULL, NULL,
-          ximinstantiate, NULL);
+  if (ximopen(dpy))
+    XUnregisterIMInstantiateCallback(xw.dpy, NULL, NULL, NULL, ximinstantiate, NULL);
 }
 
 void
 ximdestroy(XIM xim, XPointer client, XPointer call)
 {
-  xw.xim = NULL;
-  XRegisterIMInstantiateCallback(xw.dpy, NULL, NULL, NULL,
-          ximinstantiate, NULL);
+  xw.ime.xim = NULL;
+  XRegisterIMInstantiateCallback(xw.dpy, NULL, NULL, NULL, ximinstantiate, NULL);
+  XFree(xw.ime.spotlist);
+}
+
+int
+xicdestroy(XIC xim, XPointer client, XPointer call)
+{
+  xw.ime.xic = NULL;
+  return 1;
 }
 
 void
@@ -1241,7 +1260,9 @@ xinit(int cols, int rows)
   xw.draw = XftDrawCreate(xw.dpy, xw.buf, xw.vis, xw.cmap);
 
   /* input methods */
-  ximopen(xw.dpy);
+  if (!ximopen(xw.dpy)) {
+    XRegisterIMInstantiateCallback(xw.dpy, NULL, NULL, NULL, ximinstantiate, NULL);
+  }
 
   /* white cursor, black outline */
   cursor = XCreateFontCursor(xw.dpy, mouseshape);
@@ -1731,11 +1752,13 @@ xfinishdraw(void)
 void
 xximspot(int x, int y)
 {
-  XPoint spot = { win.dynborder_w + x * win.cw, win.dynborder_h + (y + 1) * win.ch };
-  XVaNestedList attr = XVaCreateNestedList(0, XNSpotLocation, &spot, NULL);
+  if (xw.ime.xic == NULL)
+    return;
 
-  XSetICValues(xw.xic, XNPreeditAttributes, attr, NULL);
-  XFree(attr);
+  xw.ime.spot.x = win.dynborder_w + x * win.cw;
+  xw.ime.spot.y = win.dynborder_h + (y + 1) * win.ch;
+
+  XSetICValues(xw.ime.xic, XNPreeditAttributes, xw.ime.spotlist, NULL);
 }
 
 void
@@ -1812,7 +1835,8 @@ focus(XEvent *ev)
     return;
 
   if (ev->type == FocusIn) {
-    XSetICFocus(xw.xic);
+    if (xw.ime.xic)
+      XSetICFocus(xw.ime.xic);
     win.mode |= MODE_FOCUSED;
     xseturgency(0);
     if (IS_SET(MODE_FOCUS))
@@ -1823,7 +1847,8 @@ focus(XEvent *ev)
         redraw();
     }
   } else {
-    XUnsetICFocus(xw.xic);
+    if (xw.ime.xic)
+      XUnsetICFocus(xw.ime.xic);
     win.mode &= ~MODE_FOCUSED;
     if (IS_SET(MODE_FOCUS))
       ttywrite("\033[O", 3, 0);
@@ -1892,7 +1917,11 @@ kpress(XEvent *ev)
   if (IS_SET(MODE_KBDLOCK))
     return;
 
-  len = XmbLookupString(xw.xic, e, buf, sizeof buf, &ksym, &status);
+  if (xw.ime.xic)
+    len = XmbLookupString(xw.ime.xic, e, buf, sizeof buf, &ksym, &status);
+  else
+    len = XLookupString(e, buf, sizeof buf, &ksym, NULL);
+
   /* 1. shortcuts */
   for (bp = shortcuts; bp < shortcuts + LEN(shortcuts); bp++) {
     if (ksym == bp->keysym && match(bp->mod, e->state)) {
