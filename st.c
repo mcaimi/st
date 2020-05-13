@@ -2772,6 +2772,7 @@ void
 draw(void)
 {
   int cx = term.c.x;
+  int ocx = term.ocx, ocy = term.ocy;
 
   if (!xstartdraw())
     return;
@@ -2791,7 +2792,10 @@ draw(void)
   }
   term.ocx = cx, term.ocy = term.c.y;
   xfinishdraw();
-  xximspot(term.ocx, term.ocy);
+
+  // update xim cursor only if position is actually changed
+  if (ocx != term.ocx || ocy != term.ocy)
+    xximspot(term.ocx, term.ocy);
 }
 
 void
