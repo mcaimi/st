@@ -2489,7 +2489,6 @@ tputc(Rune u)
   } else {
     len = utf8encode(u, c);
     if (!control && (width = wcwidth(u)) == -1) {
-      memcpy(c, "\357\277\275", 4); /* UTF_INVALID */
       width = 1;
     }
   }
