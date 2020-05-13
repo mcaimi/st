@@ -846,15 +846,22 @@ ttyread(void)
   int ret;
 
   /* append read bytes to unprocessed bytes */
-  if ((ret = read(cmdfd, buf+buflen, LEN(buf)-buflen)) < 0)
-    die("Couldn't read from shell: %s\n", strerror(errno));
-  buflen += ret;
+  ret = read(cmdfd, buf+buflen, LEN(buf) - buflen);
 
-  written = twrite(buf, buflen, 0);
-  buflen -= written;
-  /* keep any uncomplete utf8 char for the next call */
-  if (buflen > 0)
-    memmove(buf, buf + written, buflen);
+  switch (ret) {
+  case 0:
+    fputs("Found EOF in input\n", stderr);
+    exit(0);
+  case -1:
+    die("couldn't read from shell: %s\n", strerror(errno));
+  default:
+    buflen += ret;
+    written = twrite(buf, buflen, 0);
+    buflen -= written;
+    /* keep any uncomplete utf8 char for the next call */
+    if (buflen > 0)
+      memmove(buf, buf + written, buflen);
+  }
 
   if (term.scr > 0 && (unsigned int)term.scr < (histsize - 1))
     term.scr++;
