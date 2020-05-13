@@ -42,7 +42,7 @@
 /* macros */
 #define IS_SET(flag)    ((term.mode & (flag)) != 0)
 #define NUMMAXLEN(x)    ((int)(sizeof(x) * 2.56 + 0.5) + 1)
-#define ISCONTROLC0(c)    (BETWEEN(c, 0, 0x1f) || (c) == '\177')
+#define ISCONTROLC0(c)    (BETWEEN(c, 0, 0x1f) || (c) == 0x7f)
 #define ISCONTROLC1(c)    (BETWEEN(c, 0x80, 0x9f))
 #define ISCONTROL(c)    (ISCONTROLC0(c) || ISCONTROLC1(c))
 #define ISDELIM(u)      ((iswspace(u) || iswpunct(u)) && wcschr(worddelimiters, u) != NULL)
@@ -2199,7 +2199,7 @@ tdumpline(int n)
   bp = &term.line[n][0];
   end = &bp[MIN(tlinelen(n), term.col) - 1];
   if (bp != end || bp->u != ' ') {
-    for ( ;bp <= end; ++bp)
+    for ( ; bp <= end; ++bp)
       tprinter(buf, utf8encode(bp->u, buf));
   }
   tprinter("\n", 1);
@@ -2483,7 +2483,7 @@ tputc(Rune u)
   Glyph *gp;
 
   control = ISCONTROL(u);
-  if (!IS_SET(MODE_UTF8) && !IS_SET(MODE_SIXEL)) {
+  if (!IS_SET(MODE_UTF8 | MODE_SIXEL)) {
     c[0] = u;
     width = len = 1;
   } else {
