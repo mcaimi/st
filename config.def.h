@@ -241,8 +241,10 @@ ResourcePref resources[] = {
 static MouseShortcut mshortcuts[] = {
   /* button               mask            function     argument        release */
   { Button2,              XK_NO_MOD,      selpaste,     {.i = 0},      1 },
+  { Button4,              ShiftMask,      ttysend,      {.s = "\033[5;2~"} },
   { Button4,              XK_NO_MOD,      ttysend,      {.s = "\031"} },
   { Button5,              XK_NO_MOD,      ttysend,      {.s = "\005"} },
+  { Button5,              ShiftMask,      ttysend,      {.s = "\033[6;2~"} },
 };
 
 MouseKey mkeys[] = {
