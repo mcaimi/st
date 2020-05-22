@@ -43,7 +43,7 @@ void xsetsel(char *);
 int xstartdraw(void);
 void xximspot(int, int);
 
-char winid[64];
+static char winid[64];
 
 /* background alpha */
 #define OPAQUE 0xFF /* 255 */

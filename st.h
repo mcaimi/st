@@ -124,7 +124,7 @@ void histfree(void);
 
 size_t utf8encode(Rune, char *);
 
-int borderpx;
+static int borderpx;
 
 /* config.h globals */
 extern char *utmp;
