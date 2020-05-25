@@ -1801,8 +1801,7 @@ xsetmode(int set, unsigned int flags)
 int
 xsetcursor(int cursor)
 {
-  DEFAULT(cursor, 1);
-  if (!BETWEEN(cursor, 0, 6))
+  if (!BETWEEN(cursor, 0, 7))
     return 1;
   win.cursor = cursor;
   return 0;
@@ -2323,7 +2322,7 @@ main(int argc, char *argv[])
 {
   xw.l = xw.t = 0;
   xw.isfixed = False;
-  win.cursor = cursorshape;
+  xsetcursor(cursorshape);
 
   ARGBEGIN {
   case 'a':
