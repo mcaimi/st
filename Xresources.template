@@ -25,7 +25,8 @@ st.disableitalic:    0
 st.disableroman:    0
 
 st.minlatency:   8
-st.maxlatency:    33
+st.maxlatency:   33
+st.su_timeout:   200
 st.chscale:      1.0
 st.cwscale:      1.0
 st.blinktimeout: 800
