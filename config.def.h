@@ -49,6 +49,10 @@ unsigned int histsize = 2000;
 unsigned int skiptaskbar = 0;
 unsigned int skippager = 0;
 
+/* allow certain non-interactive (insecure) window operations such as:
+   setting the clipboard text */
+int allowwindowops = 0;
+
 /*
  * all punctuation are considered word delimiters, unless listed here
  *
@@ -239,6 +243,7 @@ ResourcePref resources[] = {
     { "debug",        INTEGER, &debug },
     { "borderperc",   INTEGER, &borderperc },
     { "su_timeout",   INTEGER, &su_timeout },
+    { "allowwindowops",   INTEGER, &allowwindowops },
 };
 
 /*

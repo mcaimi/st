@@ -24,6 +24,8 @@ st.disablebold:    0
 st.disableitalic:    0
 st.disableroman:    0
 
+st.allowwindowops: 0
+
 st.minlatency:   8
 st.maxlatency:   33
 st.su_timeout:   200
