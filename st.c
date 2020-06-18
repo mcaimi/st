@@ -2020,7 +2020,6 @@ strhandle(void)
     xsettitle(strescseq.args[0]);
     return;
   case 'P': /* DCS -- Device Control String */
-    term.mode |= ESC_DCS;
     /* https://gitlab.com/gnachman/iterm2/-/wikis/synchronized-updates-spec */
     if (strstr(strescseq.buf, "=1s") == strescseq.buf)
       tsync_begin(), term.mode &= ~ESC_DCS;  /* BSU */
