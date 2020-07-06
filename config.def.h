@@ -23,6 +23,18 @@ int borderperc = 20;
 int debug = 0;
 
 /*
+ * 1: render most of the lines/blocks characters without using the font for
+ *    perfect alignment between cells (U2500 - U259F except dashes/diagonals).
+ *    Bold affects lines thickness if boxdraw_bold is not 0. Italic is ignored.
+ * 0: disable (render all U25XX glyphs normally from the font).
+ */
+int boxdraw = 0;
+int boxdraw_bold = 0;
+
+/* braille (U28XX):  1: render as adjacent "pixels",  0: use font */
+int boxdraw_braille = 0;
+
+/*
  * What program is execed by st depends of these precedence rules:
  * 1: program passed with -e
  * 2: scroll and/or utmp option
@@ -244,6 +256,9 @@ ResourcePref resources[] = {
     { "borderperc",   INTEGER, &borderperc },
     { "su_timeout",   INTEGER, &su_timeout },
     { "allowwindowops",   INTEGER, &allowwindowops },
+    { "boxdraw",      INTEGER, &boxdraw },
+    { "boxdraw_bold", INTEGER, &boxdraw_bold },
+    { "boxdraw_braille",   INTEGER, &boxdraw_braille },
 };
 
 /*

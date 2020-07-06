@@ -56,6 +56,7 @@ st.skippager:   0
 st.opacity:      255
 st.unfocused_opacity:   128
 
+
 ! Defaults taken from base16-twilight colorscheme.
 st.foreground:   #a7a7a7
 st.background:   #1e1e1e
@@ -81,3 +82,15 @@ st.color18:      #323537
 st.color19:      #464b50
 st.color20:      #838184
 st.color21:      #c3c3c3
+
+! 1: render most of the lines/blocks characters without using the font for
+!    perfect alignment between cells (U2500 - U259F except dashes/diagonals).
+!    Bold affects lines thickness if boxdraw_bold is not 0. Italic is ignored.
+! 0: disable (render all U25XX glyphs normally from the font).
+st.boxdraw: 0
+st.boxdraw_bold: 0
+
+! braille (U28XX):  1: render as adjacent "pixels",  0: use font
+st.boxdraw_braille: 0
+
+
