@@ -19,6 +19,7 @@ This forks builds upon the offical ST release already patched with these [st-pat
   - vertcenter
   - relativeborder
   - support loading options from xresources
+  - boxdraw
 
 Requirements
 ------------
