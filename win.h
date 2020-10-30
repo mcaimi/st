@@ -36,6 +36,7 @@ void xfinishdraw(void);
 void xloadcols(void);
 int xsetcolorname(int, const char *);
 void xsettitle(char *);
+void xseticontitle(char *);
 int xsetcursor(int);
 void xsetmode(int, unsigned int);
 void xsetpointermotion(int);
