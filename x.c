@@ -754,13 +754,9 @@ cresize(int width, int height)
   if (height != 0)
     win.h = height;
 
-  col = (win.w - 2 * borderpx) / win.cw;
-  row = (win.h - 2 * borderpx) / win.ch;
-  col = MAX(1, col);
-  row = MAX(1, row);
-
-  win.dynborder_w = (win.w - col * win.cw) / 2;
-  win.dynborder_h = (win.h - row * win.ch) / 2;
+  col = MAX(1, (win.w - 2 * borderpx)/win.cw);
+  row = MAX(1, (win.h - 2 * borderpx)/win.ch);
+  win.dynborder_h = win.dynborder_w = borderpx;
 
   tresize(col, row);
   xresize(col, row);
@@ -774,8 +770,7 @@ xresize(int col, int row)
   win.th = row * win.ch;
 
   XFreePixmap(xw.dpy, xw.buf);
-  xw.buf = XCreatePixmap(xw.dpy, xw.win, win.w, win.h,
-      xw.depth);
+  xw.buf = XCreatePixmap(xw.dpy, xw.win, win.w, win.h, xw.depth);
   XftDrawChange(xw.draw, xw.buf);
   xclear(0, 0, win.w, win.h);
 
