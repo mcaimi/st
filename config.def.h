@@ -6,6 +6,8 @@
  * font: see http://freedesktop.org/software/fontconfig/fontconfig-user.html
  */
 static char *font = "Liberation Mono:pixelsize=12:antialias=true:autohint=true";
+// spare fonts to load for additional glyphs
+static char *spareFonts = NULL;
 
 #define TRUE 1
 #define FALSE 0
@@ -213,6 +215,7 @@ static unsigned int defaultattr = 11;
  */
 ResourcePref resources[] = {
     { "font",         STRING,  &font },
+    { "sparefonts",   STRING,  &spareFonts },
     { "color0",       STRING,  &colorname[0] },
     { "color1",       STRING,  &colorname[1] },
     { "color2",       STRING,  &colorname[2] },

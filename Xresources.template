@@ -8,7 +8,11 @@ st.termname:     st-256color
 st.shell:        /bin/bash
 
 ! The following options options can be reloaded via USR1 signal.
-st.font:         Liberation Mono:pixelsize=12:antialias=true:autohint=true;
+st.font:         Liberation Mono:pixelsize=12:antialias=true:autohint=true
+! Additional fonts to use for missing glyphs. Accepts a *comma separated* list of fonts
+st.sparefonts: Iosevka Term:pixelsize=12:antialias=true:autohint=true,Envy Code R:pixelsize=12:antialias=true:autohint=true
+
+! dynamic terminal border (pixel relative)
 st.borderperc:   20
 
 ! enable verbose error statements

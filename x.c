@@ -180,6 +180,8 @@ static void xhints(void);
 static int xloadcolor(int, const char *, Color *);
 static int xloadfont(Font *, FcPattern *);
 static void xloadfonts(char *, double);
+static int xloadsparefont(FcPattern *, int);
+static void xloadsparefonts(void);
 static void xunloadfont(Font *);
 static void xunloadfonts(void);
 static void xsetenv(void);
@@ -333,6 +335,7 @@ zoomabs(const Arg *arg)
 {
   xunloadfonts();
   xloadfonts(usedfont, arg->f);
+  xloadsparefonts();
   cresize(0, 0);
   redraw();
   xhints();
@@ -1090,6 +1093,107 @@ xunloadfont(Font *f)
     FcFontSetDestroy(f->set);
 }
 
+int
+xloadsparefont(FcPattern *pattern, int flags)
+{
+  FcPattern *match;
+  FcResult result;
+
+  match = FcFontMatch(NULL, pattern, &result);
+  if (!match) {
+    return 1;
+  }
+
+  if (!(frc[frclen].font = XftFontOpenPattern(xw.dpy, match))) {
+    FcPatternDestroy(match);
+    return 1;
+  }
+
+  frc[frclen].flags = flags;
+  /* Believe U+0000 glyph will present in each default font */
+  frc[frclen].unicodep = 0;
+  frclen++;
+
+  return 0;
+}
+
+void
+xloadsparefonts(void)
+{
+  FcPattern *pattern;
+  char needle = ',';
+  double sizeshift, fontval;
+  int fc = 0;
+  char *fp, *ptr1;
+
+  if (frclen != 0)
+    die("can't embed spare fonts. cache isn't empty");
+
+  // bail out if no spare font is specified in Xresources
+  if (spareFonts == NULL) return;
+
+  // count spare fonts defined in Xresources template
+  // spareFonts is not NULL, assume at least one font specified
+  for (fc=1, fp = strchr(spareFonts, needle); fp != NULL; fp = strchr(fp+1, needle), fc++);
+
+  // allocate space for font cache
+  if (frccap < 4 * fc) {
+    frccap += 4 * fc - frccap;
+    frc = xrealloc(frc, frccap * sizeof(Fontcache));
+  }
+
+  // tokenize spare font spec string and load fonts into cache
+  fp = strtok_r(spareFonts, &needle, &ptr1);
+  while (fp != NULL) {
+    printf("Loading extra font %s, spec %d bytes wide, frccap %d\n", fp, strlen(fp), frccap);
+    if (*fp == '-')
+      pattern = XftXlfdParse(fp, False, False);
+    else
+      pattern = FcNameParse((FcChar8 *)fp);
+
+    if (!pattern)
+      die("can't open spare font %s\n", fp);
+
+    if (defaultfontsize > 0) {
+      sizeshift = usedfontsize - defaultfontsize;
+      if (sizeshift != 0 && FcPatternGetDouble(pattern, FC_PIXEL_SIZE, 0, &fontval) == FcResultMatch) {
+        fontval += sizeshift;
+        FcPatternDel(pattern, FC_PIXEL_SIZE);
+        FcPatternDel(pattern, FC_SIZE);
+        FcPatternAddDouble(pattern, FC_PIXEL_SIZE, fontval);
+      }
+    }
+
+    FcPatternAddBool(pattern, FC_SCALABLE, 1);
+
+    FcConfigSubstitute(NULL, pattern, FcMatchPattern);
+    XftDefaultSubstitute(xw.dpy, xw.scr, pattern);
+
+    if (xloadsparefont(pattern, FRC_NORMAL))
+      die("can't open spare font %s\n", fp);
+
+    FcPatternDel(pattern, FC_SLANT);
+    FcPatternAddInteger(pattern, FC_SLANT, FC_SLANT_ITALIC);
+    if (xloadsparefont(pattern, FRC_ITALIC))
+      die("can't open spare font %s\n", fp);
+
+    FcPatternDel(pattern, FC_WEIGHT);
+    FcPatternAddInteger(pattern, FC_WEIGHT, FC_WEIGHT_BOLD);
+    if (xloadsparefont(pattern, FRC_ITALICBOLD))
+      die("can't open spare font %s\n", fp);
+
+    FcPatternDel(pattern, FC_SLANT);
+    FcPatternAddInteger(pattern, FC_SLANT, FC_SLANT_ROMAN);
+    if (xloadsparefont(pattern, FRC_BOLD))
+      die("can't open spare font %s\n", fp);
+
+    FcPatternDestroy(pattern);
+
+    // next
+    fp = strtok_r(NULL, &needle, &ptr1);
+  }
+}
+
 void
 xunloadfonts(void)
 {
@@ -1205,6 +1309,7 @@ xinit(int cols, int rows)
 
   usedfont = (opt_font == NULL)? font : opt_font;
   xloadfonts(usedfont, 0);
+  xloadsparefonts();
 
   /* colors */
   if (!USE_ARGB)
