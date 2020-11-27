@@ -62,6 +62,8 @@ unsigned int histsize = 2000;
 /* skip taskbar and pager options */
 unsigned int skiptaskbar = 0;
 unsigned int skippager = 0;
+/* load and display taskbar icon for desktops with a taskbar/dock */
+unsigned int taskbaricon = 0 ;
 
 /* allow certain non-interactive (insecure) window operations such as:
    setting the clipboard text */
@@ -241,6 +243,7 @@ ResourcePref resources[] = {
     { "histsize",     INTEGER, &histsize },
     { "skiptaskbar",  INTEGER, &skiptaskbar },
     { "skippager",    INTEGER, &skippager },
+    { "taskbaricon",  INTEGER, &taskbaricon },
     { "termname",     STRING,  &termname },
     { "shell",        STRING,  &shell },
     { "minlatency",   INTEGER, &minlatency },

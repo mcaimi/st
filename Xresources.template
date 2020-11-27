@@ -30,6 +30,9 @@ st.disableroman:    0
 
 st.allowwindowops: 0
 
+! st taskbar icon
+st.taskbaricon:   0
+
 st.minlatency:   8
 st.maxlatency:   33
 st.su_timeout:   200
