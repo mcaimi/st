@@ -1121,34 +1121,165 @@ xloadsparefont(FcPattern *pattern, int flags)
   return 0;
 }
 
+struct _spareFontInfo {
+  char *fontString;
+  unsigned int fontStringLen;
+  struct _spareFontInfo *next;
+};
+
+struct _spareFontList {
+  unsigned int fontCount;
+  struct _spareFontInfo *fonts;
+};
+typedef struct _spareFontList spareFontList;
+
+char *
+deepcopy(char *src) {
+  char *tmpBuf = NULL;
+  int srcLen = (strlen(src) + 1) * sizeof(char);
+
+  // deep string copy
+  tmpBuf = (char *)malloc(srcLen);
+  bzero(tmpBuf, srcLen);
+  strncpy(tmpBuf, src, srcLen - 1);
+
+#ifdef __DEBUG
+  printf("deepcopy(): duped string 0x%X to 0x%X\n", src, tmpBuf);
+#endif
+
+  // return copied string
+  return tmpBuf;
+}
+
+struct _spareFontInfo *
+allocateFontInfo(char *content)
+{
+  struct _spareFontInfo *newItem = NULL;
+  newItem = (struct _spareFontInfo *)malloc(sizeof(struct _spareFontInfo));
+
+  if (newItem != NULL) {
+    newItem->fontStringLen = strlen(content);
+    newItem->fontString = deepcopy(content);
+    newItem->next = NULL;
+  }
+
+#ifdef __DEBUG
+  printf("allocateFontInfo(): newItem 0x%X\n", newItem);
+#endif
+
+  return newItem;
+}
+
+struct _spareFontInfo *
+lastItem(struct _spareFontInfo *head) 
+{
+  if (head == NULL) return NULL;
+
+  if (head->next == NULL) 
+    return head;
+  else
+    return lastItem(head->next);
+}
+
+void
+unloadSpareFontInfo(struct _spareFontInfo *spi)
+{
+  if (spi == NULL) return;
+  if (spi->next == NULL) {
+#ifdef __DEBUG
+    printf("unloadSpareFontInfo() freeing item 0x%X\n", spi);
+#endif
+    if (spi->fontString != NULL) free(spi->fontString);
+    free(spi);
+    return;
+  }
+  else
+    unloadSpareFontInfo(spi->next);
+}
+
+void
+unloadSpareFontList(spareFontList *spl)
+{
+  if (spl != NULL) {
+#ifdef __DEBUG
+    printf("unloadSpareFontInfo() freeing font list 0x%X, parent 0x%X\n", spl->fonts, spl);
+#endif
+    unloadSpareFontInfo(spl->fonts);
+    free(spl);
+  }
+}
+
+spareFontList *
+loadSpareFontList(char *spec)
+{
+  spareFontList *tempList = NULL;
+  char needle = ',';
+  char *loopPtr = NULL, *stringToParse = NULL;
+  struct _spareFontInfo *fontItem = NULL;
+
+  if (!spec) return NULL;
+
+  // allocate fontlist object
+  tempList = (spareFontList *)malloc(sizeof(spareFontList));
+  tempList->fonts = NULL;
+
+  // count spare fonts defined in Xresources template
+  // spec must be not NULL, assume at least one font is correctly specified
+  for (tempList->fontCount=1, loopPtr = strchr(spec, needle); loopPtr != NULL; loopPtr = strchr(loopPtr+1, needle), tempList->fontCount++);
+
+  // parse font string spec
+  stringToParse = deepcopy(spec);
+  if (stringToParse == NULL) {
+    unloadSpareFontList(tempList);
+    return NULL;
+  }
+
+  // parse font spec into a linked list
+  loopPtr = strtok(stringToParse, &needle);
+  while (loopPtr != NULL) {
+    fontItem = (struct _spareFontInfo *)allocateFontInfo(loopPtr);
+#ifdef __DEBUG
+    printf("loadSpareFontList(): fontItem 0x%X, tempList->fonts 0x%X\n", fontItem, tempList->fonts);
+#endif
+    if (tempList->fonts == NULL)
+      tempList->fonts = fontItem;
+    else
+      lastItem(tempList->fonts)->next = fontItem;
+#ifdef __DEBUG
+    printf("loadSpareFontList(): lastItem 0x%X\n", lastItem(tempList->fonts));
+#endif
+    loopPtr = strtok(NULL, &needle);
+  }
+
+  // return fontList
+  return tempList;
+}
+
 void
 xloadsparefonts(void)
 {
   FcPattern *pattern;
-  char needle = ',';
   double sizeshift, fontval;
-  int fc = 0;
-  char *fp, *ptr1;
+  spareFontList *spl = NULL;
+  struct _spareFontInfo *fontItem = NULL;
+  char *fp = NULL;
 
   if (frclen != 0)
     die("can't embed spare fonts. cache isn't empty");
 
   // bail out if no spare font is specified in Xresources
-  if (spareFonts == NULL) return;
-
-  // count spare fonts defined in Xresources template
-  // spareFonts is not NULL, assume at least one font specified
-  for (fc=1, fp = strchr(spareFonts, needle); fp != NULL; fp = strchr(fp+1, needle), fc++);
+  spl = loadSpareFontList(spareFonts);
+  if (spl == NULL) return;
 
   // allocate space for font cache
-  if (frccap < 4 * fc) {
-    frccap += 4 * fc - frccap;
+  if (frccap < 4 * spl->fontCount) {
+    frccap += 4 * spl->fontCount - frccap;
     frc = xrealloc(frc, frccap * sizeof(Fontcache));
   }
 
-  // tokenize spare font spec string and load fonts into cache
-  fp = strtok_r(spareFonts, &needle, &ptr1);
-  while (fp != NULL) {
+  fontItem = spl->fonts;
+  while (fontItem != NULL) {
+    fp = fontItem->fontString;
     printf("Loading extra font %s, spec %d bytes wide, frccap %d\n", fp, strlen(fp), frccap);
     if (*fp == '-')
       pattern = XftXlfdParse(fp, False, False);
@@ -1194,8 +1325,11 @@ xloadsparefonts(void)
     FcPatternDestroy(pattern);
 
     // next
-    fp = strtok_r(NULL, &needle, &ptr1);
+    fontItem = fontItem->next;
   }
+
+  fp = NULL;
+  if (spl != NULL) unloadSpareFontList(spl);
 }
 
 void
@@ -1209,6 +1343,8 @@ xunloadfonts(void)
   xunloadfont(&dc.bfont);
   xunloadfont(&dc.ifont);
   xunloadfont(&dc.ibfont);
+
+  if (frc) free(frc);
 }
 
 #define RGBA_TO_ARGB(argb, source_pixel) \
