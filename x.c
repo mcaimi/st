@@ -48,6 +48,12 @@ typedef struct {
   signed char appcursor; /* application cursor */
 } Key;
 
+/* geometry modes */
+typedef enum {
+  PixelGeometry,
+  CellGeometry
+} Geometry;
+
 /* Xresources preferences */
 enum resource_type {
   STRING = 0,
@@ -1448,7 +1454,7 @@ xicdestroy(XIC xim, XPointer client, XPointer call)
 }
 
 void
-xinit(int cols, int rows)
+xinit(int w, int h)
 {
   XGCValues gcvalues;
   Cursor cursor;
@@ -1509,8 +1515,17 @@ xinit(int cols, int rows)
   xloadcols();
 
   /* adjust fixed window geometry */
-  win.w = 2 * win.dynborder_w + cols * win.cw;
-  win.h = 2 * win.dynborder_h + rows * win.ch;
+  switch (geometryMode) {
+    case CellGeometry:
+      win.w = 2 * win.dynborder_w + w * win.cw;
+      win.h = 2 * win.dynborder_h + h * win.ch;
+      break;
+    case PixelGeometry:
+      win.w = w;
+      win.h = h;
+      break;
+  }
+
   if (xw.gm & XNegative)
     xw.l += DisplayWidth(xw.dpy, xw.scr) - win.w - 2;
   if (xw.gm & YNegative)
@@ -2662,6 +2677,12 @@ main(int argc, char *argv[])
   case 'g':
     xw.gm = XParseGeometry(EARGF(usage()),
         &xw.l, &xw.t, &cols, &rows);
+    geometryMode = CellGeometry;
+    break;
+  case 'G':
+    xw.gm = XParseGeometry(EARGF(usage()),
+        &xw.l, &xw.t, &width, &height);
+    geometryMode = PixelGeometry;
     break;
   case 'i':
     xw.isfixed = 1;
@@ -2703,10 +2724,19 @@ run:
     die("can't open display\n");
 
   config_init();
+  switch (geometryMode) {
+    case CellGeometry:
+      xinit(cols, rows);
+      break;
+    case PixelGeometry:
+      xinit(width, height);
+      cols = (win.w - 2 * borderpx) / win.cw;
+      rows = (win.h - 2 * borderpx) / win.ch;
+      break;
+  }
   cols = MAX(cols, 1);
   rows = MAX(rows, 1);
   tnew(cols, rows);
-  xinit(cols, rows);
   signal(SIGUSR1, reload);
   xsetenv();
   selinit();

@@ -194,10 +194,23 @@ static unsigned int cursorshape = 2;
 
 /*
  * Default columns and rows numbers
+ * Cell dimensions
  */
 
 static unsigned int cols = 80;
 static unsigned int rows = 24;
+
+/*
+ * Default width and height in pixels
+ * Pixel Dimensions
+ */
+static unsigned int width = 800;
+static unsigned int height = 600;
+
+/*
+ * Default geometry mode
+ */
+static Geometry geometryMode = CellGeometry;
 
 /*
  * Default colour and shape of the mouse cursor
@@ -240,6 +253,8 @@ ResourcePref resources[] = {
     { "cursorshape",  INTEGER, &cursorshape },
     { "cols",         INTEGER, &cols },
     { "rows",         INTEGER, &rows },
+    { "width",        INTEGER, &width },
+    { "height",       INTEGER, &height },
     { "histsize",     INTEGER, &histsize },
     { "skiptaskbar",  INTEGER, &skiptaskbar },
     { "skippager",    INTEGER, &skippager },

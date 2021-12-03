@@ -46,6 +46,10 @@ st.prompt_char:  $
 st.rows:  25
 st.cols:  80
 
+! Dimensions if PixelGeometry is selected
+st.width: 800
+st.height: 600
+
 ! bell volume, 0 disables this feature
 st.bellvolume:  200
 
