@@ -3,11 +3,13 @@ st - simple terminal
 st is a simple terminal emulator for X which sucks less.
 
 This is a WIP fork of Suckless' awesome [ST](http://st.suckless.org), with some added features built-in:
-  - Official patches that needed an update were updated to run in ST 0.8.1
+  - Kept mostly in sync with upstream branch
   - Number of rows and columns are read from Xresources
   - Custom history size via Xresources
   - Added skiptaskbar and skippager XResources options
   - Added support for Xorg fullscreen mode via F11 key
+  - For desktops with a dock (e.g. GNOME) an hardcoded RGBA icon is provided
+  - Many other fixes here and there
 
 This forks builds upon the offical ST release already patched with these [st-patches](https://st.suckless.org/patches/):
   - st background alpha
@@ -20,18 +22,17 @@ This forks builds upon the offical ST release already patched with these [st-pat
   - relativeborder
   - support loading options from xresources
   - boxdraw
+  - sync patch
 
 Requirements
 ------------
 In order to build st you need the Xlib header files.
 For the alpha patch, you also need XRender.
 
-dmenu was replaced with Rofi, so you also need to install that or change the source code.
-
 Additional required packages:
   - w3m
   - xurls
-  - rofi
+  - dmenu
 
 Installation
 ------------

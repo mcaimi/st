@@ -49,7 +49,7 @@
 #define ISDELIM(u)      ((iswspace(u) || iswpunct(u)) && wcschr(worddelimiters, u) != NULL)
 
 /* constants */
-#define ISO14755CMD   "rofi -l 1 -dmenu -p codepoint </dev/null"
+#define ISO14755CMD   "dmenu -bw 2 -w %lu -p codepoint: </dev/null"
 
 enum term_mode {
   MODE_WRAP        = 1 << 0,
