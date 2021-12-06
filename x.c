@@ -1370,15 +1370,14 @@ convert_pixmap(void)
 
   bzero(converted_icon_data, (len + 2)*sizeof(unsigned long));
 
-  unsigned int index = 0;
-  converted_icon_data[index++] = (unsigned long)tIconBytes.width;
-  converted_icon_data[index++] = (unsigned long)tIconBytes.height;
+  converted_icon_data[0] = (unsigned long)tIconBytes.width;
+  converted_icon_data[1] = (unsigned long)tIconBytes.height;
 
   unsigned int *pixmap_pointer = (unsigned int *)tIconBytes.pixel_data;
 
-  printf("Loading X11 Taskbar Icon");
-  for (int offset=0; offset<len; offset++) {
-    converted_icon_data[(index++) + 2] = pixmap_pointer[offset];
+  printf("Loading X11 Taskbar Icon: w: %d, h: %d, bpp: %d\n", tIconBytes.width, tIconBytes.height, tIconBytes.bytes_per_pixel << 3);
+  for (unsigned int offset=0; offset<len; offset++) {
+    (converted_icon_data + 2)[offset] = pixmap_pointer[offset];
   }
 
   // return converted pixmap
@@ -1392,7 +1391,7 @@ load_icon(void)
   xw.taskbar_icon_atom = XInternAtom(xw.dpy, "_NET_WM_ICON", False);
   xw.cardinal_atom = XInternAtom(xw.dpy, "CARDINAL", False);
 
-  int pixmap_length = 2 + (tIconBytes.width * tIconBytes.height);
+  unsigned int pixmap_length = 2 + (tIconBytes.width * tIconBytes.height);
 
   // change property
   XChangeProperty(xw.dpy, xw.win,
