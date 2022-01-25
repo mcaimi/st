@@ -1070,8 +1070,9 @@ xloadfonts(char *fontstr, double fontsize)
     defaultfontsize = usedfontsize;
   }
 
-  if (xloadfont(&dc.font, pattern))
+  if (xloadfont(&dc.font, pattern)) {
     die("can't open font %s\n", fontstr);
+  }
 
   if (usedfontsize < 0) {
     FcPatternGetDouble(dc.font.match->pattern,
@@ -1091,6 +1092,7 @@ xloadfonts(char *fontstr, double fontsize)
   FcPatternDel(pattern, FC_SLANT);
   if (!disableitalic)
     FcPatternAddInteger(pattern, FC_SLANT, FC_SLANT_ITALIC);
+
   if (xloadfont(&dc.ifont, pattern))
     die("can't open font %s\n", fontstr);
 
@@ -1166,6 +1168,7 @@ deepcopy(char *src) {
 
 #ifdef __DEBUG
   printf("deepcopy(): duped string 0x%X to 0x%X\n", src, tmpBuf);
+  printf("deepcopy(): source string: [%s], dest string [%s]\n", src, tmpBuf);
 #endif
 
   // return copied string
@@ -1185,19 +1188,38 @@ allocateFontInfo(char *content)
   }
 
 #ifdef __DEBUG
-  printf("allocateFontInfo(): newItem 0x%X\n", newItem);
+  printf("allocateFontInfo(): newItem 0x%X, content [%s]\n", newItem, newItem->fontString);
 #endif
 
   return newItem;
 }
 
+#ifdef __DEBUG
+void
+printSpareFontInfo(struct _spareFontInfo *head)
+{
+  if (head == NULL) return;
+
+  if (head->next != NULL) {
+    printSpareFontInfo(head->next);
+  }
+
+  printf("position: [0x%X]\n", head);
+}
+#endif
+
 struct _spareFontInfo *
-lastItem(struct _spareFontInfo *head) 
+lastItem(struct _spareFontInfo *head)
 {
   if (head == NULL) return NULL;
 
-  if (head->next == NULL) 
+  if (head->next == NULL)
+  {
+#ifdef __DEBUG
+    printf("lastItem(): last_item 0x%X\n", head);
+#endif
     return head;
+  }
   else
     return lastItem(head->next);
 }
@@ -1206,16 +1228,20 @@ void
 unloadSpareFontInfo(struct _spareFontInfo *spi)
 {
   if (spi == NULL) return;
-  if (spi->next == NULL) {
-#ifdef __DEBUG
-    printf("unloadSpareFontInfo() freeing item 0x%X\n", spi);
-#endif
-    if (spi->fontString != NULL) free(spi->fontString);
-    free(spi);
-    return;
-  }
-  else
+
+  if (spi->next != NULL) {
     unloadSpareFontInfo(spi->next);
+  }
+
+#ifdef __DEBUG
+  printf("unloadSpareFontInfo() freeing item 0x%X, [%s]\n", spi, spi->fontString);
+#endif
+  if (spi->fontString != NULL) {
+    free(spi->fontString);
+    spi->fontString = NULL;
+  }
+
+  free(spi);
 }
 
 void
@@ -1223,9 +1249,10 @@ unloadSpareFontList(spareFontList *spl)
 {
   if (spl != NULL) {
 #ifdef __DEBUG
-    printf("unloadSpareFontInfo() freeing font list 0x%X, parent 0x%X\n", spl->fonts, spl);
+    printf("unloadSpareFontInfo() freeing font Info 0x%X, font List 0x%X\n", spl->fonts, spl);
 #endif
     unloadSpareFontInfo(spl->fonts);
+    spl->fonts = NULL;
     free(spl);
   }
 }
@@ -1262,10 +1289,12 @@ loadSpareFontList(char *spec)
 #ifdef __DEBUG
     printf("loadSpareFontList(): fontItem 0x%X, tempList->fonts 0x%X\n", fontItem, tempList->fonts);
 #endif
-    if (tempList->fonts == NULL)
+    if (tempList->fonts == NULL) {
       tempList->fonts = fontItem;
-    else
+    }
+    else {
       lastItem(tempList->fonts)->next = fontItem;
+    }
 #ifdef __DEBUG
     printf("loadSpareFontList(): lastItem 0x%X\n", lastItem(tempList->fonts));
 #endif
@@ -1273,6 +1302,9 @@ loadSpareFontList(char *spec)
   }
 
   // return fontList
+#ifdef __DEBUG
+  printSpareFontInfo(tempList->fonts);
+#endif
   return tempList;
 }
 
@@ -1350,7 +1382,10 @@ xloadsparefonts(void)
   }
 
   fp = NULL;
-  if (spl != NULL) unloadSpareFontList(spl);
+  if (spl != NULL) {
+    unloadSpareFontList(spl);
+    spl = NULL;
+  }
 }
 
 void
@@ -1365,7 +1400,7 @@ xunloadfonts(void)
   xunloadfont(&dc.ifont);
   xunloadfont(&dc.ibfont);
 
-  if (frc) free(frc);
+//  if (frc) free(frc);
 }
 
 #define RGBA_TO_ARGB(argb, source_pixel) \
