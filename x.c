@@ -93,6 +93,9 @@ static int mouseaction(XEvent *e, uint release);
 #define XEMBED_FOCUS_IN  4
 #define XEMBED_FOCUS_OUT 5
 
+/* size of title stack */
+#define TITLESTACKSIZE 8
+
 /* macros */
 #define IS_SET(flag)    ((win.mode & (flag)) != 0)
 #define TRUERED(x)    (((x) & 0xff0000) >> 8)
@@ -254,6 +257,8 @@ static DC dc;
 static XWindow xw;
 static XSelection xsel;
 static TermWindow win;
+static int tstki; /* title stack index */
+static char *titlestack[TITLESTACKSIZE]; /* title stack */
 
 /* Font Ring Cache */
 enum {
@@ -2092,10 +2097,30 @@ xseticontitle(char *p)
 }
 
 void
-xsettitle(char *p)
+xfreetitlestack(void)
+{
+  for (int i = 0; i < LEN(titlestack); i++) {
+    free(titlestack[i]);
+    titlestack[i] = NULL;
+  }
+}
+
+void
+xsettitle(char *p, int pop)
 {
   XTextProperty prop;
-  DEFAULT(p, opt_title);
+
+  free(titlestack[tstki]);
+  if (pop) {
+    titlestack[tstki] = NULL;
+    tstki = (tstki - 1 + TITLESTACKSIZE) % TITLESTACKSIZE;
+    p = titlestack[tstki] ? titlestack[tstki] : opt_title;
+  } else if (p) {
+    titlestack[tstki] = xstrdup(p);
+  } else {
+    titlestack[tstki] = NULL;
+    p = opt_title;
+  }
 
   if (Xutf8TextListToTextProperty(xw.dpy, &p, 1, XUTF8StringStyle,
       &prop) != Success)
@@ -2103,6 +2128,16 @@ xsettitle(char *p)
   XSetWMName(xw.dpy, xw.win, &prop);
   XSetTextProperty(xw.dpy, xw.win, &prop, xw.netwmname);
   XFree(prop.value);
+}
+
+void
+xpushtitle(void)
+{
+  int tstkin = (tstki + 1) % TITLESTACKSIZE;
+
+  free(titlestack[tstkin]);
+  titlestack[tstkin] = titlestack[tstki] ? xstrdup(titlestack[tstki]) : NULL;
+  tstki = tstkin;
 }
 
 int
