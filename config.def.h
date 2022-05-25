@@ -50,7 +50,7 @@ char *scroll = NULL;
 char *stty_args = (char *)"stty raw pass8 nl -echo -iexten -cstopb 38400";
 
 /* identification sequence returned in DA and DECID */
-char *vtiden = "\033[?6c";
+char *vtiden = "\033[?12;4c";
 
 /* Kerning / character bounding-box multipliers */
 static float cwscale = 1.0;
@@ -58,6 +58,9 @@ static float chscale = 1.0;
 
 /* histsize value */
 unsigned int histsize = 2000;
+
+/* sixel deallocation buffer in lines */
+unsigned int max_lines_before_sixel_deallocation = 1000;
 
 /* skip taskbar and pager options */
 unsigned int skiptaskbar = 0;
@@ -256,6 +259,7 @@ ResourcePref resources[] = {
     { "width",        INTEGER, &width },
     { "height",       INTEGER, &height },
     { "histsize",     INTEGER, &histsize },
+    { "max_sixel_deallocation_buffer",     INTEGER, &max_lines_before_sixel_deallocation },
     { "skiptaskbar",  INTEGER, &skiptaskbar },
     { "skippager",    INTEGER, &skippager },
     { "taskbaricon",  INTEGER, &taskbaricon },

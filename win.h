@@ -1,4 +1,5 @@
 /* See LICENSE for license details. */
+#pragma once
 
 enum win_mode {
 	MODE_VISIBLE     = 1 << 0,

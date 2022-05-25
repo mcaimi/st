@@ -9,19 +9,20 @@
 #include <unistd.h>
 #include <strings.h>
 #include <libgen.h>
-#include <X11/Xatom.h>
-#include <X11/Xlib.h>
-#include <X11/cursorfont.h>
-#include <X11/keysym.h>
-#include <X11/Xft/Xft.h>
-#include <X11/XKBlib.h>
-#include <X11/Xresource.h>
 
 char *argv0;
 #include "arg.h"
 #include "st.h"
 #include "win.h"
 #include "icon.h"
+
+/* Globals */
+DC dc;
+XWindow xw;
+XSelection xsel;
+TermWindow win;
+static int tstki; /* title stack index */
+static char *titlestack[TITLESTACKSIZE]; /* title stack */
 
 /* types used in config.h */
 typedef struct {
@@ -93,86 +94,11 @@ static int mouseaction(XEvent *e, uint release);
 #define XEMBED_FOCUS_IN  4
 #define XEMBED_FOCUS_OUT 5
 
-/* size of title stack */
-#define TITLESTACKSIZE 8
-
 /* macros */
 #define IS_SET(flag)    ((win.mode & (flag)) != 0)
 #define TRUERED(x)    (((x) & 0xff0000) >> 8)
 #define TRUEGREEN(x)    (((x) & 0xff00))
 #define TRUEBLUE(x)   (((x) & 0xff) << 8)
-
-typedef XftDraw *Draw;
-typedef XftColor Color;
-typedef XftGlyphFontSpec GlyphFontSpec;
-
-/* Purely graphic info */
-typedef struct {
-  int tw, th; /* tty width and height */
-  int w, h; /* window width and height */
-  int dynborder_h, dynborder_w; /* dynamic border size */
-  int ch; /* char height */
-  int cw; /* char width  */
-  int cyo; /* char y offset */
-  int mode; /* window state/mode flags */
-  int cursor; /* cursor style */
-} TermWindow;
-
-typedef struct {
-  Display *dpy;
-  Colormap cmap;
-  Window win;
-  Drawable buf;
-  GlyphFontSpec *specbuf; /* font spec buffer used for rendering */
-  Atom xembed, wmdeletewin, netwmname, netwmiconname, netwmpid;
-  Atom window_fullscreen, window_state, skip_taskbar, skip_pager;
-  Atom taskbar_icon_atom, cardinal_atom;
-  struct {
-    XIM xim;
-    XIC xic;
-    XPoint spot;
-    XVaNestedList spotlist;
-  } ime;
-  Draw draw;
-  Visual *vis;
-  XSetWindowAttributes attrs;
-  int scr;
-  int isfixed; /* is fixed geometry? */
-  int depth; /* bit depth */
-  int l, t; /* left and top offset */
-  int gm; /* geometry mask */
-} XWindow;
-
-typedef struct {
-  Atom xtarget;
-  char *primary, *clipboard;
-  struct timespec tclick1;
-  struct timespec tclick2;
-} XSelection;
-
-/* Font structure */
-#define Font Font_
-typedef struct {
-  int height;
-  int width;
-  int ascent;
-  int descent;
-  int badslant;
-  int badweight;
-  short lbearing;
-  short rbearing;
-  XftFont *match;
-  FcFontSet *set;
-  FcPattern *pattern;
-} Font;
-
-/* Drawing Context */
-typedef struct {
-  Color *col;
-  size_t collen;
-  Font font, bfont, ifont, ibfont;
-  GC gc;
-} DC;
 
 static inline ushort sixd_to_16bit(int);
 static int xmakeglyphfontspecs(XftGlyphFontSpec *, const Glyph *, int, int, int);
@@ -252,14 +178,6 @@ static void (*handler[LASTEvent])(XEvent *) = {
   [SelectionRequest] = selrequest,
 };
 
-/* Globals */
-static DC dc;
-static XWindow xw;
-static XSelection xsel;
-static TermWindow win;
-static int tstki; /* title stack index */
-static char *titlestack[TITLESTACKSIZE]; /* title stack */
-
 /* Font Ring Cache */
 enum {
   FRC_NORMAL,
@@ -297,6 +215,8 @@ static uint buttons; /* bit field of pressed buttons */
 extern int disablebold;
 extern int disableitalic;
 extern int disableroman;
+
+extern Term term;
 
 void
 clipcopy(const Arg *dummy)
@@ -2178,13 +2098,86 @@ xdrawline(Line line, int x1, int y1, int x2)
 }
 
 void
+delete_image(ImageList *im)
+{
+  if (!ISNULL(im)) {
+    if (!ISNULL(im->prev)) {
+      im->prev->next = im->next;
+    }
+    else {
+      term.images = im->next;
+    }
+
+    if (!ISNULL(im->next)) {
+      im->next->prev = im->prev;
+    }
+
+    if (im->pixmap)
+      XFreePixmap(xw.dpy, (Drawable)im->pixmap);
+
+    free(im->pixels);
+    free(im);
+  }
+}
+
+void
 xfinishdraw(void)
 {
+  ImageList *im;
+  int x, y;
+  int n = 0;
+  int nlimit = 256;
+  XRectangle *rects = NULL;
+  XGCValues gcvalues;
+  GC gc;
+
   XCopyArea(xw.dpy, xw.buf, xw.win, dc.gc, 0, 0, win.w,
       win.h, 0, 0);
   XSetForeground(xw.dpy, dc.gc,
       dc.col[IS_SET(MODE_REVERSE)?
         defaultfg : defaultbg].pixel);
+
+  for (im = term.images; im; im = im->next) {
+    if (!ISNULL(im)) {
+      if (im->should_delete) {
+        delete_image(im);
+        break;
+      }
+
+      if (!im->pixmap) {
+        im->pixmap = (void *)XCreatePixmap(xw.dpy, xw.win, im->width, im->height, xw.depth);
+        XImage ximage = {
+          .format = ZPixmap,
+          .data = (char *)im->pixels,
+          .width = im->width,
+          .height = im->height,
+          .xoffset = 0,
+          .byte_order = LSBFirst,
+          .bitmap_bit_order = MSBFirst,
+          .bits_per_pixel = 32,
+          .bytes_per_line = im->width * 4,
+          .bitmap_unit = 32,
+          .bitmap_pad = 32,
+          .depth = xw.depth
+        };
+
+        XPutImage(xw.dpy, (Drawable)im->pixmap, dc.gc, &ximage, 0, 0, 0, 0, im->width, im->height);
+        free(im->pixels);
+        im->pixels = NULL;
+      }
+
+      n = 0;
+      memset(&gcvalues, 0, sizeof(gcvalues));
+      gcvalues.graphics_exposures = False;
+      gc = XCreateGC(xw.dpy, (USE_ARGB)?xw.buf:xw.win, GCGraphicsExposures, &gcvalues);
+
+      XCopyArea(xw.dpy, (Drawable)im->pixmap, xw.buf, gc, 0, 0, im->width, im->height, borderpx + im->x * win.cw, borderpx + im->y * win.ch);
+      XFreeGC(xw.dpy, gc);
+    }
+  }
+
+  free(rects);
+  drawregion(0, 0, term.col, term.row);
 }
 
 void
