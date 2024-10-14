@@ -1529,7 +1529,7 @@ xinit(int w, int h)
 {
   XGCValues gcvalues;
   Cursor cursor;
-  Window parent;
+  Window parent, root;
   pid_t thispid = getpid();
   XColor xmousefg, xmousebg;
 
@@ -1611,12 +1611,16 @@ xinit(int w, int h)
     | ButtonMotionMask | ButtonPressMask | ButtonReleaseMask;
   xw.attrs.colormap = xw.cmap;
 
-  if (!(opt_embed && (parent = strtol(opt_embed, NULL, 0))))
-    parent = XRootWindow(xw.dpy, xw.scr);
-  xw.win = XCreateWindow(xw.dpy, parent, xw.l, xw.t,
+  root = XRootWindow(xw.dpy, xw.scr);
+  if (!(opt_embed && (parent = strtol(opt_embed, NULL, 0)))) 
+    parent = root;
+  xw.win = XCreateWindow(xw.dpy, root, xw.l, xw.t,
       win.w, win.h, 0, xw.depth, InputOutput,
       xw.vis, CWBackPixel | CWBorderPixel | CWBitGravity
       | CWEventMask | CWColormap, &xw.attrs);
+
+  if (parent != root)
+    XReparentWindow(xw.dpy, xw.win, parent, xw.l, xw.t);
 
   snprintf(winid, LEN(winid), "%lu", (unsigned long)xw.win);
 
